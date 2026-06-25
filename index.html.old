@@ -1,0 +1,3849 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gestor de Cuentas</title>
+    <meta name="version" content="0.2.0">
+    <meta name="author" content="Respada">
+    <meta name="reply-to" content="respada.pgr@gmail.com">
+    <meta name="description" content="Lightweight web application for account management. Organize your credentials directly in your browser using local AES-GCM encryption. Without external data transfer.">
+    <meta name="description" lang="es" content="Aplicación web ligera para la gestión de cuentas. Organice sus credenciales directamente en su navegador usando cifrado AES-GCM local. Sin transferencia de datos externa.">
+    <meta name="description" lang="en" content="Lightweight web application for account management. Organize your credentials directly in your browser using local AES-GCM encryption. Without external data transfer.">
+
+    <style>
+        /* Variables CSS ---------------------------------------------------------------------------------------- */
+        :root {
+            --primary-color: #1276b9;
+            --primary-hover-color: #0d729b;
+            --secondary-color: #36db7b;
+            --secondary-hover-color: #16aa54;
+            --red-color: #e74c3c;
+            --red-hover-color: #c72c1c;
+            --dark-color: #1f1f20;
+            --dark-hover-color: #101011;
+            --background-color-body: #d3e4fc;
+            --background-color-top: #839ffd;
+            --background-color-main: #f9faff;
+            --background-color-table-head: #ccc;
+            --background-color-table-row-even: #f6fbfb;
+            --background-color-table-row-odd: #ffffff;
+            --background-color-table-row-selected: #f0f0f0;
+            --border-color-input-text: #ccc;
+            --border-color-table: #ccc;
+            --box-sadow-color: rgba(0, 0, 0, 0.2);
+            --font-color: #141414;
+            --font-color-button: #fcfcfc;
+            --font-color-table-row: #141414;
+            --font-family: 'Arial', sans-serif;
+            --font-size: 16px;
+            --font-size-h1: 24px;
+        }
+
+        /* Modo Oscuro */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --background-color-body: #2c353a;
+                --background-color-main: #323d42;
+                --box-sadow-color: rgba(0, 0, 0, 0.2);
+                --font-color: #f5f5f5;
+                --font-color-button: #fcfcfc;
+                --font-color-table-row: #141414;
+            }
+        }
+
+        /* ---------------------------------------------------------------------------------------------------------------------------- */
+        /* Texto ---------------------------------------------------------------------------------------------------------------------- */
+        /* Encabezado */
+        h1 {
+            text-align: center;
+            font-size: var(--font-size-h1);
+        }
+
+        input {
+            padding: 5px;
+            border: 1px solid var(--border-color-input-text);
+            border-radius: 2px;
+            transition: border-color 0.3s;
+            font-size: var(--font-size);
+        }
+
+            input:focus {
+                border-color: var(--primary-color);
+            }
+
+        /* Botones ----------------------------------------------- */
+        button, .btn, .btn-primary {
+            margin: 3px;
+            height: 26px;
+            min-width: 26px;
+            padding: 2px 5px;
+            font-size: var(--font-size);
+            border: none;
+            border-radius: 3px;
+            background-color: var(--primary-color);
+            transition: background-color 0.3s;
+            color: var(--font-color-button);
+            cursor: pointer;
+        }
+
+            button:hover, .btn:hover, .btn-primary:hover {
+                background-color: var(--primary-hover-color);
+            }
+
+            button.secondary, .btn-secondary {
+                background-color: var(--secondary-color);
+            }
+
+                button.secondary:hover,
+                .btn-secondary:hover {
+                    background-color: var(--secondary-hover-color);
+                }
+
+            button.red, .btn-red {
+                background-color: var(--red-color);
+            }
+
+                button.red:hover, .btn-red:hover {
+                    background-color: var(--red-hover-color);
+                }
+
+            button.dark, .btn-dark {
+                background-color: var(--dark-color);
+            }
+
+                button.dark:hover, .btn-dark:hover {
+                    background-color: var(--dark-hover-color);
+                }
+
+            button * .emoji, .btn-emoji {
+                display: inline-block;
+                padding: 5px;
+                cursor: pointer;
+                /*user-select: none;  Evita la selección de texto al hacer clic */
+            }
+
+        /* Generales ------------------------------------------------------------------------------------------------------------------ */
+        /* ---------------------------------------------------------------------------------------------------------------------------- */
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 4px;
+            background-color: var(--background-color-body);
+            color: var(--font-color);
+            font-family: var(--font-family);
+            font-size: var(--font-size);
+        }
+
+        /* Menu bar ------------------------------------------------------------------------------------------------------------------- */
+        /* ---------------------------------------------------------------------------------------------------------------------------- */
+        #containerMenuBar {
+            z-index: 100;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--background-color-top);
+            box-shadow: 0 0 6px var(--box-sadow-color);
+        }
+
+            #containerMenuBar > div {
+                margin: 0 auto;
+                max-width: 1200px;
+                min-width: 312px;
+                padding: 0 5px;
+            }
+
+        /* Menu bar left -------------------------------------------------------------------------------------------------------------- */
+        #buttonPanelMenuLeft {
+            float: left;
+            height: 40px;
+            padding: 5px 2px 2px 2px;
+        }
+        /* Campo countdown ----------------------------------------------- */
+        #fieldCountdown {
+            display: inline-block;
+        }
+
+            #fieldCountdown #btnPauseCountdown,
+            #fieldCountdown #btnStartCountdown {
+                display: none;
+            }
+
+            #fieldCountdown.running #btnPauseCountdown,
+            #fieldCountdown.running #btnResetCountdown {
+                display: inline;
+            }
+
+            #fieldCountdown.paused #btnStartCountdown,
+            #fieldCountdown.paused #btnResetCountdown {
+                display: inline;
+            }
+
+            #fieldCountdown #txtCountdown {
+                width: 69px;
+                padding: 1px 1px 1px 2px;
+            }
+
+            #fieldCountdown button {
+                margin: 0px;
+                min-width: auto;
+                border: none;
+                padding: 0px;
+                background-color: transparent;
+                font-size: var(--font-size);
+                cursor: pointer;
+            }
+
+        /* Menu bar right ------------------------------------------------------------------------------------------------------------- */
+        #buttonPanelMenuRight {
+            float: right;
+            height: 40px;
+            padding: 6px 2px 2px 2px;
+        }
+
+        /* Main container ------------------------------------------------------------------------------------------------------------- */
+        /* ---------------------------------------------------------------------------------------------------------------------------- */
+        #containerMain {
+            margin: 5px auto 5px auto;
+            max-width: 425px;
+            min-width: 312px;
+            padding: 4px;
+        }
+
+            #containerMain.opened {
+                margin: 50px auto 5px auto;
+            }
+
+        /* Main menu container -------------------------------------------------------------------------------------------------------- */
+        /* ---------------------------------------------------------------------------------------------------------------------------- */
+        #containerMainMenu {
+            margin: 10px auto 10px auto;
+            max-width: 405px;
+        }
+
+        .containerMainMenuLine {
+            min-height: 33px;
+        }
+
+        /* Decrypt Password ------------------------------------------------------------------------------------------------------------ */
+        #containerDecryptPassword {
+            display: inline-block;
+            height: 33px;
+        }
+
+        #txtDecryptPassword {
+            max-width: 130px;
+        }
+
+        /* Actions -------------------------------------------------------------------------------------------------------------------- */
+        #containerActions {
+            float: right;
+            height: 33px;
+            padding: 1px 0px;
+        }
+
+        /* Autosave ------------------------------------------------------------------------------------------------------------------- */
+        #containerAutosave {
+            margin-top: 6px;
+        }
+
+        #lblAutosave {
+            display: block;
+            float: left;
+            margin: 1px;
+            padding: 1px 2px 1px 10px;
+        }
+
+        #chkAutosave {
+            display: block;
+            float: left;
+            margin: 3px 2px 3px 2px;
+        }
+
+        /* Tabla ---------------------------------------------------------------------------------------------------------------------- */
+        #tblMain {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            font-size: var(--font-size);
+            word-wrap: break-word;
+        }
+
+            #tblMain thead.header-large {
+                display: table-header-group;
+            }
+
+            #tblMain thead.header-small {
+                display: none;
+            }
+
+            #tblMain th {
+                border: 1px solid var(--border-color-table);
+                background-color: var(--background-color-table-head);
+                /*padding: 5px;*/
+                text-align: center;
+            }
+
+            #tblMain tr {
+                min-height: 26px;
+                color: var(--font-color-table-row);
+            }
+
+                #tblMain tr:nth-child(even) {
+                    background-color: var(--background-color-table-row-even);
+                }
+
+                #tblMain tr:nth-child(odd) {
+                    background-color: var(--background-color-table-row-odd);
+                }
+
+                #tblMain tr.selected {
+                    background-color: var(--background-color-table-row-selected);
+                }
+
+                #tblMain tr.form-row {
+                    display: none;
+                }
+
+            #tblMain td {
+                border: 1px solid var(--border-color-table);
+            }
+
+                #tblMain td > div {
+                    display: flex;
+                    align-items: center;
+                    padding: 5px;
+                }
+
+                    #tblMain td > div > span {
+                        flex-wrap: wrap;
+                        justify-content: center;
+                        font-size: 12px;
+                    }
+
+                #tblMain td.multiline > div {
+                    display: block;
+                    width: 100%;
+                    padding: 5px 0 0 5px;
+                }
+
+                    #tblMain td.multiline > div > div {
+                        padding: 0 5px 5px 0;
+                    }
+
+                #tblMain td > div > span.field-label {
+                    display: none;
+                    padding-right: 5px;
+                    font-weight: bold;
+                }
+
+            #tblMain input {
+                width: 100%;
+            }
+
+            #tblMain tr.data-row input[readonly] {
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            #tblMain .buttonPanel {
+                justify-content: center;
+                align-items: center;
+            }
+
+            #tblMain .btnTogglePassword {
+                margin-left: 5px;
+            }
+
+        /* Bottom container ----------------------------------------------------------------------------------------------------------- */
+        /* ---------------------------------------------------------------------------------------------------------------------------- */
+        #containerBottom {
+            margin: 5px 0 5px 0;
+            max-width: 425px;
+            min-width: 312px;
+            padding: 4px;
+        }
+
+        /* Legal Modal ----------------------------------------------------------------------------------------------------------- */
+        /* ---------------------------------------------------------------------------------------------------------------------------- */
+        #legalModal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.85);
+            backdrop-filter: blur(4px);
+        }
+
+            #legalModal > div {
+                margin: 5% auto;
+                max-height: 80vh;
+                max-width: 600px;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+                border-radius: 8px;
+                overflow-y: auto;
+                padding: 30px;
+                background-color: var(--background-color-main);
+                font-family: var(--font-family);
+                text-align: justify;
+            }
+
+            #legalModal ul {
+                font-size: 13px;
+                color: var(--font-color);
+                line-height: 1.4;
+            }
+
+            #legalModal li {
+                padding: 3px;
+            }
+
+            #legalModal div.buttonPanel {
+                text-align: center;
+                margin-top: 20px;
+            }
+
+        #btnAcceptLegal {
+            height: 40px;
+            padding: 0 25px;
+            font-weight: bold;
+        }
+
+        /* ---------------------------------------------------------------------------------------------------------------------------- */
+        /* Responsivo ----------------------------------------------------------------------------------------------------------------- */
+        /* Movil & Tablet Devices ----------------------------------------------------------------------------------------------------- */
+        @media (max-width: 1024px) {
+            #containerMain.editing::before {
+                content: " ";
+                display: block;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5);
+                z-index: 25;
+            }
+
+            #tblMain thead.header-large {
+                display: none;
+            }
+
+            #tblMain thead.header-small {
+                display: table-header-group;
+            }
+
+            #tblMain th,
+            #tblMain td {
+                display: block;
+                width: 100% !important;
+                position: relative;
+            }
+
+            #tblMain th {
+                text-align: left;
+            }
+
+            #tblMain tr.form-row {
+                display: none;
+                position: fixed;
+                top: 0;
+                right: 0;
+                z-index: 50;
+                background-color: white;
+                padding-top: 40px;
+            }
+
+            #tblMain td > div {
+                justify-content: center;
+            }
+
+                #tblMain td > div > span.field-label {
+                    display: inline;
+                    overflow: initial;
+                }
+
+            #tblMain td.site-name {
+                background-color: var(--background-color-table-head);
+            }
+
+            #tblMain td.only-laptop {
+                display: none;
+            }
+
+            #tblMain #form-row.new #updateDateCell {
+                display: none;
+            }
+
+            #tblMain #btnAddAccount {
+                display: none;
+            }
+
+            #containerMenuBarBottom {
+                display: none;
+            }
+        }
+
+        /* Movil Devices -------------------------------------------------------------------------------------------------------------- */
+        @media (max-width: 767px) {
+            #containerMain {
+                padding: 2px;
+            }
+
+            #containerBottom {
+                margin: 10px 0 5px 0;
+                padding: 2px;
+            }
+
+            /* Encabezado */
+            h1 {
+                text-align: center;
+            }
+
+            .right button {
+                margin-left: 5px;
+                margin-right: 0px;
+            }
+        }
+
+        /* Small Movil Devices-------------------------------------------------------------------------------------------------------- */
+        @media (max-width: 319px) {
+            body {
+                padding: 0 4px;
+            }
+
+            #containerMain {
+                box-shadow: none;
+            }
+
+                #containerMain.opened {
+                    margin: 80px auto 5px auto;
+                }
+
+            #containerActions {
+                float: none;
+                height: 33px;
+            }
+        }
+
+        @media (max-width: 351px) {
+            #containerMain.opened {
+                margin: 90px auto 5px auto;
+            }
+        }
+
+        /*M --------------------------------------------------------------------------------------------------------------------------- */
+        @media (min-width: 320px) {
+            body {
+                padding: 0 4px;
+            }
+
+            .container, #containerMain, #containerBottom {
+                box-shadow: 0 0 4px var(--box-sadow-color);
+                background-color: var(--background-color-main);
+                padding: 4px;
+            }
+        }
+
+        /* L -------------------------------------------------------------------------------------------------------------------------- */
+        @media (min-width: 375px) {
+            body {
+                padding: 0 8px;
+            }
+
+            .container, #containerMain, #containerBottom {
+                box-shadow: 0 0 5px var(--box-sadow-color);
+                padding: 8px;
+            }
+        }
+
+        /*Tablet ---------------------------------------------------------------------------------------------------------------------- */
+        @media (min-width: 768px) {
+            body {
+                padding: 0 10px;
+            }
+
+            /* Capas contenedoras */
+            .container, #containerMain, #containerBottom {
+                margin: 10px auto;
+                box-shadow: 0 0 7px var(--box-sadow-color);
+                padding: 10px;
+            }
+
+            #containerActions {
+                display: inline-block;
+            }
+        }
+
+        /*Tablet rotated -------------------------------------------------------------------------------------------------------------- */
+        @media (min-width: 777px) {
+            body {
+                padding: 0 12px;
+            }
+
+            .container, #containerMain, #containerBottom {
+                margin: 12px auto;
+                box-shadow: 0 0 10px var(--box-sadow-color);
+                padding: 12px;
+            }
+        }
+
+        /*Desk ------------------------------------------------------------------------------------------------------------------------ */
+        @media (min-width: 865px) {
+            :root {
+                --font-size: 14px;
+            }
+
+            #containerMain, #containerBottom {
+                padding: 16px;
+            }
+
+            #containerMainMenu {
+                margin-bottom: 15px;
+            }
+
+            .containerMainMenuLine {
+                min-height: 51px;
+                box-shadow: 0 0 10px var(--box-sadow-color);
+                padding: 10px;
+            }
+
+            #containerDecryptPassword, #containerActions {
+                height: 31px;
+            }
+        }
+
+        /*Laptop ---------------------------------------------------------------------------------------------------------------------- */
+        @media (min-width: 1024px) {
+            #containerMain, #containerBottom {
+                padding: 20px;
+                max-width: 1440px;
+                min-width: 1024px;
+            }
+
+            #fieldCountdown #txtCountdown {
+                width: 60px;
+            }
+
+            #containerMenuBarBottom {
+                display: block;
+                margin-top: 10px;
+                height: 31px;
+            }
+        }
+
+        /*Laptop L -------------------------------------------------------------------------------------------------------------------- */
+        @media (min-width: 1440px) {
+        }
+
+        /*Laptop 4K ------------------------------------------------------------------------------------------------------------------- */
+        @media (min-width: 2560px) {
+        }
+
+        /* ---------------------------------------------------------------------------------------------------------------------------- */
+        /* Important ------------------------------------------------------------------------------------------------------------------ */
+        .hidden {
+            display: none !important;
+        }
+
+        .right {
+            float: right !important;
+        }
+    </style>
+</head>
+
+<body class="hidden">
+    <div id="containerMenuBar" class="hidden">
+        <div>
+            <div id="buttonPanelMenuLeft">
+                <button id="btnClose" type="button" title="Cerrar" class="btn-red" onclick="handleCloseForm()">X</button>
+                <div id="fieldCountdown">
+                    <input id="txtCountdown" type="text" value="00:05:00" />
+                    <button id="btnStartCountdown">▶️</button>
+                    <button id="btnPauseCountdown">⏸️</button>
+                    <button id="btnResetCountdown">🔄</button>
+                </div>
+                <button id="btnSave" type="button" title="Guardar" class="btn-secondary hidden" aria-label="Guardar en fichero">Guardar</button>
+            </div>
+            <div id="buttonPanelMenuRight">
+                <button id="btnAddAccountTop" type="button" title="Nuevo">+</button>
+                <button id="btnMoveAccountUp" type="button" class="right">↑</button>
+                <button id="btnMoveAccountDown" type="button" class="right">↓</button>
+            </div>
+        </div>
+    </div>
+    <div id="containerMain">
+        <div id="containerMainMenu">
+            <h1>Gestión de cuentas</h1>
+            <div class="containerMainMenuLine">
+                <div id="containerDecryptPassword">
+                    <input id="txtDecryptPassword" type="password" placeholder="Contraseña" aria-label="Contraseña de Desencriptación" />
+                    <span id="btnToggleDecryptPassword" title="Mostrar/Ocultar Contraseña" class="btn-emoji" aria-label="Mostrar/Ocultar Contraseña">👁️</span>
+                    <span id="btnChangeDecryptPassword" type="button" title="Cambiar contraseña encriptación" class="btn-emoji hidden" aria-label="Cambiar contraseña encriptación">💾</span>
+                    <button id="btnNext" type="button" title="Siguiente">></button>
+                </div>
+                <input id="inputLoadFile" type="file" class="hidden" accept=".gdc" />
+
+                <div id="containerActions">
+                    <button id="btnLoad" type="button" title="Cargar fichero" class="btn-secondary right" aria-label="Cargar fichero">Cargar</button>
+                    <button id="btnNewDecryptPassword" type="button" title="Nuevo" class="btn-dark right" aria-label="Nuevo fichero">Nuevo</button>
+                    <div id="containerAutosave" class="autosave-field right hidden">
+                        <label id="lblAutosave" for="chkAutosave">Autosave</label>
+                        <input id="chkAutosave" type="checkbox" checked />
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="containerTableMain" class="hidden">
+            <table id="tblMain">
+                <thead class="header-large">
+                    <tr>
+                        <th style="width: 0%;  min-width: 0px" class="hidden"></th>
+                        <th style="width: 17%; min-width: 170px">Sitio</th>
+                        <th style="width: 16%; min-width: 160px">Usuario</th>
+                        <th style="width: 18%; min-width: 180px">Password</th>
+                        <th style="width: 22%; min-width: 220px">Notas</th>
+                        <th style="width: 9%; min-width: 90px" class="only-laptop">Creación</th>
+                        <th style="width: 9%; min-width: 90px">Actualiz.</th>
+                        <th style="width: 8%;  min-width: 80px"></th>
+                    </tr>
+                </thead>
+                <thead class="header-small">
+                    <tr>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr id="form-row" class="form-row">
+                        <td class="hidden">
+                            <div>
+                                <input type="text" id="f-id" placeholder="Id" aria-label="Id" readonly />
+                            </div>
+                        </td>
+                        <td class="multiline">
+                            <div>
+                                <div style="flex: 3 1 100px">
+                                    <input type="text" id="f-name" placeholder="Sitio" aria-label="Nombre del Sitio" />
+                                </div>
+                                <div style="flex: 9 1 100px">
+                                    <input type="url" id="f-url" placeholder="Url" required aria-label="URL del Sitio" />
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div>
+                                <input type="text" id="f-user" placeholder="Usuario" aria-label="Usuario" />
+                            </div>
+                        </td>
+                        <td>
+                            <div>
+                                <input type="password" id="f-password" class="encrypted-password" placeholder="Password"
+                                       aria-label="Contraseña" />
+                                <span class="btnTogglePassword btn-emoji">👁️</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div>
+                                <input type="text" id="f-notes" placeholder="Notas" aria-label="Notas" />
+                            </div>
+                        </td>
+                        <td class="only-laptop">
+                            <div>
+                                <input type="text" id="f-createDate" placeholder="Fecha de Creación" disabled
+                                       aria-label="Fecha de Creación" readonly />
+                            </div>
+                        </td>
+                        <td id="updateDateCell">
+                            <div>
+                                <input type="text" id="f-updateDate" placeholder="Fecha de Actualización" disabled
+                                       aria-label="Fecha de Actualización" readonly />
+                            </div>
+                        </td>
+                        <td>
+                            <div class="buttonPanel">
+                                <button type="button" id="save-button" title="Guardar" class="btn btn-primary">
+                                    💾
+                                </button>
+                                <button type="button" id="cancel-button" title="Cancelar" class="btn btn-dark">
+                                    ❌
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div id="containerMenuBarBottom">
+                <button id="btnAddAccount" class="right">Añadir</button>
+            </div>
+        </div>
+    </div>
+    <div id="containerBottom" class="hidden">
+        -
+    </div>
+
+    <div id="legalModal">
+        <div>
+
+            <div style="border-bottom: 2px solid var(--red-color); margin-bottom: 20px;">
+                <h2 style="margin-top:0; color: var(--red-color);">⚠️ Aviso Legal / Legal Disclaimer</h2>
+            </div>
+
+            <div style="margin-bottom: 10px;">
+                <p><strong>Español:</strong> Este es un proyecto amateur con fines educativos. Al usarlo, usted acepta que:</p>
+                <ul>
+                    <li><strong>Cifrado Local:</strong> Los datos se cifran en su navegador. Si olvida su contraseña, <strong>no hay forma de recuperar los datos</strong>.</li>
+                    <li><strong>Almacenamiento local:</strong> Esta aplicación utiliza el almacenamiento local del navegador. Si limpia los datos del navegador, usa el modo incógnito o cambia de ordenador, <strong>perderá tus datos</strong>. Guarde una copia de seguridad en fichero en su ordenador pulsando el botón <strong>Guardar</strong>.</li>
+                    <li><strong>Sin Responsabilidad:</strong> El autor no se hace responsable de pérdidas de información, hackeos locales o fallos del software.</li>
+                    <li><strong>Uso:</strong> Se proporciona "tal cual" (as-is), sin garantías de seguridad absoluta.</li>
+                </ul>
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid var(--border-color-table); margin: 20px 0;">
+
+            <div style="margin-bottom: 10px;">
+                <p><strong>English:</strong> This is an amateur project for educational purposes. By using it, you agree that:</p>
+                <ul>
+                    <li><strong>Local Encryption:</strong> Data is encrypted in your browser. If you forget your password, <strong>data recovery is impossible</strong>.</li>
+                    <li><strong>Local Storage:</strong> This application uses your browser's local storage. If you clear your browser data, use incognito status, or switch computers, <strong>you will lose your data</strong>. Save a backup copy to a file on your computer by clicking the <strong>Save</strong> button.</li>
+                    <li><strong>No Liability:</strong> The author is not responsible for data loss, local security breaches, or software failures.</li>
+                    <li><strong>Usage:</strong> Provided "as-is", without any warranties regarding absolute security.</li>
+                </ul>
+            </div>
+
+            <div class="buttonPanel">
+                <button id="btnAcceptLegal" class="btn-primary">Entiendo y Acepto / I Understand & Accept</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        class URLManager {
+            static ensureProtocol(url) {
+                if (!/^https?:\/\//i.test(url)) {
+                    return "https://" + url;
+                }
+                return url;
+            }
+        }
+
+        class TimeManager {
+            // Return total seconds from a time string in format "hh:mm:ss"
+            static toSeconds(timeString) {
+                const [h, m, s] = timeString.split(":").map(Number);
+                if (!isNaN(h) && !isNaN(m) && !isNaN(s)) {
+                    return h * 3600 + m * 60 + s;
+                } else {
+                    return null;
+                }
+            }
+
+            static format(seconds) {
+                const h = String(Math.floor(seconds / 3600)).padStart(2, "0");
+                const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, "0");
+                const s = String(seconds % 60).padStart(2, "0");
+                return `${h}:${m}:${s}`;
+            }
+        }
+
+        class DateManager {
+            static getCurrentDateString() {
+                const now = new Date();
+                const hours = now.getHours().toString().padStart(2, "0");
+                const minutes = now.getMinutes().toString().padStart(2, "0");
+                const seconds = now.getSeconds().toString().padStart(2, "0");
+                const day = now.getDate().toString().padStart(2, "0");
+                const month = (now.getMonth() + 1).toString().padStart(2, "0"); // Los meses en JavaScript son 0-indexados
+                const year = now.getFullYear();
+
+                const formattedDate = `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+                return formattedDate;
+            }
+
+            static getFormattedCurrentDateString() {
+                const now = new Date();
+                const formattedDate = `${now.getFullYear()}${(now.getMonth() + 1)
+                    .toString()
+                    .padStart(2, "0")}${now.getDate().toString().padStart(2, "0")}_${now
+                        .getHours()
+                        .toString()
+                        .padStart(2, "0")}${now.getMinutes().toString().padStart(2, "0")}${now
+                            .getSeconds()
+                            .toString()
+                            .padStart(2, "0")}`;
+                return formattedDate;
+            }
+        }
+
+        class AlertManager {
+            static show(message) {
+                alert(message);
+            }
+
+            static showMessage(message) {
+                alert("GDC:\n" + message);
+            }
+
+            static showSuccess(message) {
+                alert("¡ÉXITO! GDC:\n" + message);
+            }
+
+            static showWarning(message) {
+                alert("¡ATENCIÓN! GDC:\n" + message);
+            }
+
+            static showError(message) {
+                alert("¡ERROR! GDC:\n" + message);
+            }
+
+            static showException(exception) {
+                if (typeof exception === "string") {
+                    alert("¡EXCEPCIÓN! GDC: \n" + exception);
+                }
+                else if (exception instanceof Error) {
+                    alert("¡EXCEPCIÓN! GDC:\n" + exception.message);
+                }
+                else {
+                    throw new Error("AlertManager.showException: Unsupported exception type");
+                }
+            }
+        }
+
+        class ConfirmManager {
+            static confirm(message) {
+                return confirm("GDC:\n" + message);
+            }
+        }
+
+        class ConsoleManager {
+            static addLog(text) {
+                console.log(DateManager.getCurrentDateString() + "> GDC: " + text);
+            }
+
+            static addWarn(text) {
+                console.warn(DateManager.getCurrentDateString() + "> GDC: " + text);
+            }
+
+            static addError(text) {
+                console.error(DateManager.getCurrentDateString() + "> GDC Error: " + text);
+            }
+        }
+
+        class StringManager {
+
+            //Oculta visualmente un texto reemplazando cada caracter por un asterisco (*)
+            static maskText(text) {
+                if (text) return text.replace(/./g, "*");
+                else return "";
+            }
+
+            // Método privado/auxiliar para aplicar la clave secreta
+            static _xor(text, key) {
+                if (!key) return text;
+                let result = '';
+                for (let i = 0; i < text.length; i++) {
+                    result += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+                }
+                return result;
+            }
+
+            // Codifica a Base64 nativo
+            static toBase64(str) {
+                return btoa(unescape(encodeURIComponent(str)));
+            }
+
+            // Decodifica desde Base64 nativo
+            static fromBase64(str) {
+                return decodeURIComponent(escape(atob(str)));
+            }
+
+            static encrypt(text, key) {
+                if (!text) return "";
+                const obfuscated = this._xor(text, key);
+                return this.toBase64(obfuscated);
+            }
+
+            static decrypt(cipherText, key) {
+                if (!cipherText) return "";
+                const obfuscated = this.fromBase64(cipherText);
+                return this._xor(obfuscated, key);
+            }
+
+            //Genera un hash de 8 caracteres basado en el algoritmo DJB2, a partir de un texto.
+            static toHash(str) {
+                if (!str) return "";
+
+                let hash = 5381; // Número primo inicial (Semilla estándar del algoritmo DJB2)
+
+                for (let i = 0; i < str.length; i++) {
+                    // Operación matemática síncrona de bits (Bitwise) para mezclar los caracteres
+                    hash = (hash * 33) ^ str.charCodeAt(i);
+                }
+
+                // >>> 0 convierte el resultado a un número entero sin signo de 32 bits
+                // .toString(16) lo transforma en una cadena hexadecimal (ej: "4b2f8a1c")
+                return (hash >>> 0).toString(16);
+            }
+
+            //Genera una contraseña aleatoria de forma síncrona y criptográficamente segura.
+            static generatePassword(length = 12) {
+                // Banco de caracteres permitidos (letras mayúsculas, minúsculas, números y símbolos)
+                const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~`|}{[]:;?><,./-=";
+                let password = "";
+
+                // Creamos un array de números enteros sin signo de 32 bits, uno por cada carácter que necesitamos
+                const randomValues = new Uint32Array(length);
+
+                // Llenamos el array con números aleatorios criptográficos de forma SÍNCRONA
+                window.crypto.getRandomValues(randomValues);
+
+                for (let i = 0; i < length; i++) {
+                    // Usamos el residuo (%) para asegurarnos de que el número caiga dentro del rango de nuestro charset
+                    const randomIndex = randomValues[i] % charset.length;
+                    password += charset[randomIndex];
+                }
+
+                return password;
+            }
+        }
+
+        class HtmlManager {
+
+            static existElementById(id) {
+                if (!id) {
+                    ConsoleManager.addWarn("HtmlManager.existElementById: ID is null or undefined.");
+                    return false;
+                }
+                return document.getElementById(id) !== null;
+            }
+
+            static getElementById(id) {
+                if (!id) {
+                    ConsoleManager.addWarn("HtmlManager.getElementById: ID is null or undefined.");
+                    return null;
+                }
+                return document.getElementById(id);
+            }
+
+            static getElementByQuerySelector(query) {
+                if (!query) {
+                    ConsoleManager.addWarn("HtmlManager.getElementByQuerySelector: Query selector is null or undefined.");
+                    return null;
+                }
+                return document.querySelector(query);
+            }
+
+            static getChildBySelector(target, query) {
+                if (!target) {
+                    ConsoleManager.addWarn("HtmlManager.getChildBySelector: Target element is null or undefined.");
+                    return null;
+                }
+                if (!query) {
+                    ConsoleManager.addWarn("HtmlManager.getChildBySelector: Query selector is null or undefined.");
+                    return null;
+                }
+                return target.querySelector(query);
+            }
+
+            static getValue(target) {
+                if (!target) {
+                    ConsoleManager.addWarn("HtmlManager.getValue: Target element is null or undefined.");
+                    return "";
+                }
+                return target.value !== undefined ? target.value : "";
+            }
+
+            static setValue(target, value) {
+                if (!target) {
+                    ConsoleManager.addWarn("HtmlManager.setValue: Target element is null or undefined.");
+                    return;
+                }
+                target.value = value;
+            }
+
+            static getText(target) {
+                if (!target) {
+                    ConsoleManager.addWarn("HtmlManager.getText: Target element is null or undefined.");
+                    return "";
+                }
+                return target.textContent || "";
+            }
+
+            static setText(target, text) {
+                if (!target) {
+                    ConsoleManager.addWarn("HtmlManager.setText: Target element is null or undefined.");
+                    return;
+                }
+                target.textContent = text;
+            }
+
+            static getAttr(target, name) {
+                if (!target) {
+                    ConsoleManager.addWarn(`HtmlManager.getAttr: Target element is null or undefined.`);
+                    return null;
+                }
+                return target.getAttribute(name);
+            }
+
+            static setAttr(target, name, value) {
+                if (!target) {
+                    ConsoleManager.addWarn(`HtmlManager.setAttr: Target element is null or undefined.`);
+                    return;
+                }
+                target.setAttribute(name, value);
+            }
+
+            static getChecked(target) {
+                if (!target) {
+                    ConsoleManager.addWarn("HtmlManager.getChecked: Target element is null or undefined.");
+                    return false;
+                }
+                return !!target.checked;
+            }
+
+            static setChecked(target, isChecked) {
+                if (!target) {
+                    ConsoleManager.addWarn("HtmlManager.setChecked: Target element is null or undefined.");
+                    return;
+                }
+                target.checked = isChecked;
+            }
+
+            static getDisabled(target) {
+                if (!target) {
+                    ConsoleManager.addWarn("HtmlManager.getDisabled: Target element is null or undefined.");
+                    return false;
+                }
+                return !!target.disabled;
+            }
+
+            static setDisabled(target, isDisabled) {
+                if (!target) {
+                    ConsoleManager.addWarn("HtmlManager.setDisabled: Target element is null or undefined.");
+                    return;
+                }
+                target.disabled = isDisabled;
+            }
+
+            static containsClass(target, className) {
+                if (!target) {
+                    ConsoleManager.addWarn(`HtmlManager.containsClass: Target element is null or undefined.`);
+                    return false;
+                }
+                return target.classList.contains(className);
+            }
+
+            static addClass(target, className) {
+                if (!target) {
+                    ConsoleManager.addWarn("HtmlManager.addClass: Target element is null or undefined.");
+                    return;
+                }
+                target.classList.add(className);
+            }
+
+            static removeClass(target, className) {
+                if (!target) {
+                    ConsoleManager.addWarn("HtmlManager.removeClass: Target element is null or undefined.");
+                    return;
+                }
+                target.classList.remove(className);
+            }
+
+            static toggleClass(target, className) {
+                if (!target) {
+                    ConsoleManager.addWarn("HtmlManager.toggleClass: Target element is null or undefined.");
+                    return;
+                }
+                target.classList.toggle(className);
+            }
+
+            static hide(target) {
+                if (!target) {
+                    ConsoleManager.addWarn("HtmlManager.hide: Target element is null or undefined.");
+                    return;
+                }
+                this.addClass(target, "hidden");
+            }
+
+            static show(target) {
+                if (!target) {
+                    ConsoleManager.addWarn("HtmlManager.show: Target element is null or undefined.");
+                    return;
+                }
+                this.removeClass(target, "hidden");
+            }
+
+            static toggleShow(target) {
+                if (!target) {
+                    ConsoleManager.addWarn("HtmlManager.toggleShow: Target element is null or undefined.");
+                    return;
+                }
+                this.toggleClass(target, "hidden");
+            }
+
+            static setInnerHTML(target, content) {
+                if (!target) {
+                    ConsoleManager.addWarn("HtmlManager.setInnerHTML: Target element is null or undefined.");
+                    return;
+                }
+                target.innerHTML = content;
+            }
+
+            // Agrega un nuevo elemento hijo al principio del elemento objetivo
+            static prependChild(target, child) {
+                if (!target) {
+                    ConsoleManager.addWarn("HtmlManager.prependChild: Target element is null or undefined.");
+                    return;
+                }
+                target.prepend(child);
+            }
+
+            static appendChild(target, child) {
+                if (!target) {
+                    ConsoleManager.addWarn("HtmlManager.appendChild: Target element is null or undefined.");
+                    return;
+                }
+                target.appendChild(child);
+            }
+
+            static replaceElement(target, newElement) {
+                if (!target) {
+                    ConsoleManager.addWarn("HtmlManager.replaceElement: Target element is null or undefined.");
+                    return;
+                }
+                if (!newElement) {
+                    ConsoleManager.addWarn("HtmlManager.replaceElement: New element is null or undefined.");
+                    return;
+                }
+                target.replaceWith(newElement);
+            }
+
+            static addEvent(target, eventType, callback) {
+                if (!target) {
+                    ConsoleManager.addWarn(`HtmlManager.addEvent: Cannot listen to "${eventType}". Target element is null or undefined.`);
+                    return;
+                }
+                target.addEventListener(eventType, callback);
+            }
+        }
+
+        class HtmlBase {
+            static Control = class {
+                constructor(id) {
+                    this.id = id;
+                }
+
+                get element() {
+                    const result = HtmlManager.getElementById(this.id);
+                    if (!result) {
+                        throw new Error("HtmlBase.Control: Element with ID '" + this.id + "' not found.");
+                    }
+                    return result;
+                }
+
+                replaceWith(newControl) {
+                    // Si nos pasan otra instancia de nuestra arquitectura, extraemos su elemento nativo
+                    const newEl = newControl instanceof HtmlBase.Control ? newControl.element : newControl;
+
+                    HtmlManager.replaceElement(this.element, newEl);
+                    return this;
+                }
+
+                addClass(className) {
+                    HtmlManager.addClass(this.element, className);
+                    return this;
+                }
+
+                removeClass(className) {
+                    HtmlManager.removeClass(this.element, className);
+                    return this;
+                }
+
+                toggleClass(className) {
+                    HtmlManager.toggleClass(this.element, className);
+                    return this;
+                }
+
+                show() {
+                    HtmlManager.show(this.element);
+                    return this;
+                }
+
+                hide() {
+                    HtmlManager.hide(this.element);
+                    return this;
+                }
+
+                toggleShow() {
+                    HtmlManager.toggleShow(this.element);
+                    return this;
+                }
+
+                getAttr(name) {
+                    return HtmlManager.getAttr(this.element, name);
+                }
+
+                setAttr(name, value) {
+                    HtmlManager.setAttr(this.element, name, value);
+                    return this;
+                }
+
+                on(eventType, callback) {
+                    HtmlManager.addEvent(this.element, eventType, callback);
+                    return this;
+                }
+
+                onClick(callback) { return this.on("click", callback); }
+                onDblClick(callback) { return this.on("dblclick", callback); }
+                onContextMenu(callback) { return this.on("contextmenu", callback); }
+                onMouseEnter(callback) { return this.on("mouseenter", callback); }
+                onMouseLeave(callback) { return this.on("mouseleave", callback); }
+                onMouseMove(callback) { return this.on("mousemove", callback); }
+                onKeyDown(callback) { return this.on("keydown", callback); }
+                onKeyUp(callback) { return this.on("keyup", callback); }
+                onFocus(callback) { return this.on("focus", callback); }
+                onBlur(callback) { return this.on("blur", callback); }
+            }
+
+            static FormControl = class extends HtmlBase.Control {
+                constructor(id) {
+                    super(id);
+                }
+
+                get value() { return HtmlManager.getValue(this.element); }
+                set value(newValue) { HtmlManager.setValue(this.element, newValue); }
+
+                get disabled() { return HtmlManager.getDisabled(this.element); }
+                set disabled(isDisabled) { HtmlManager.setDisabled(this.element, isDisabled); }
+
+                setValue(newValue) {
+                    HtmlManager.setValue(this.element, newValue);
+                    return this;
+                }
+
+                setDisabled() {
+                    this.disabled = true;
+                    return this;
+                }
+
+                setEnabled() {
+                    this.disabled = false;
+                    return this;
+                }
+
+                onChange(callback) { return this.on("change", callback); }
+                onInput(callback) { return this.on("input", callback); }
+            }
+
+            static ContainerControl = class extends HtmlBase.Control {
+                constructor(id) {
+                    super(id);
+                }
+
+                html(content) {
+                    HtmlManager.setInnerHTML(this.element, content);
+                    return this;
+                }
+
+                append(childElement) {
+                    const el = childElement instanceof HtmlBase.Control ? childElement.element : childElement;
+                    HtmlManager.appendChild(this.element, el);
+                    return this;
+                }
+
+                clear() {
+                    HtmlManager.setInnerHTML(this.element, "");
+                    return this;
+                }
+            }
+
+            static TextControl = class extends HtmlBase.Control {
+                constructor(id) {
+                    super(id);
+                }
+                get text() {
+                    return HtmlManager.getText(this.element);
+                }
+
+                set text(newText) {
+                    HtmlManager.setText(this.element, newText);
+                }
+
+                setText(newText) {
+                    HtmlManager.setText(this.element, newText);
+                    return this;
+                }
+            }
+        }
+
+        class HtmlControls {
+            // === CONTAINER CONTROLS ===
+            static Div = class extends HtmlBase.ContainerControl { constructor(id) { super(id); } }
+            static Span = class extends HtmlBase.ContainerControl { constructor(id) { super(id); } }
+            static Section = class extends HtmlBase.ContainerControl { constructor(id) { super(id); } }
+            static Article = class extends HtmlBase.ContainerControl { constructor(id) { super(id); } }
+            static Main = class extends HtmlBase.ContainerControl { constructor(id) { super(id); } }
+            static Header = class extends HtmlBase.ContainerControl { constructor(id) { super(id); } }
+            static Footer = class extends HtmlBase.ContainerControl { constructor(id) { super(id); } }
+            static Nav = class extends HtmlBase.ContainerControl { constructor(id) { super(id); } }
+            static Aside = class extends HtmlBase.ContainerControl { constructor(id) { super(id); } }
+
+            static Form = class extends HtmlBase.ContainerControl {
+                constructor(id) { super(id); }
+                submit() { this.element.submit(); return this; }
+                reset() { this.element.reset(); return this; }
+            }
+
+            static List = class extends HtmlBase.ContainerControl { constructor(id) { super(id); } }
+            static ListItem = class extends HtmlBase.ContainerControl { constructor(id) { super(id); } }
+
+            static Image = class extends HtmlBase.ContainerControl {
+                constructor(id) { super(id); }
+                setSrc(url) { HtmlManager.setAttr(this.element, "src", url); return this; }
+                getSrc() { return HtmlManager.getAttr(this.element, "src") || ""; }
+            }
+
+            static Anchor = class extends HtmlBase.ContainerControl {
+                constructor(id) { super(id); }
+                setHref(url) { HtmlManager.setAttr(this.element, "href", url); return this; }
+                getHref() { return HtmlManager.getAttr(this.element, "href") || ""; }
+            }
+
+            static Table = class extends HtmlBase.ContainerControl {
+                constructor(id) { super(id); }
+
+                get headElement() {
+                    let thead = HtmlManager.getChildBySelector(this.element, 'thead');
+                    if (!thead) throw new Error(`HtmlControls.Table.headElement: Table head element not found for ID '${this.id}'.`);
+                    return thead;
+                }
+
+                get bodyElement() {
+                    let tbody = HtmlManager.getChildBySelector(this.element, 'tbody');
+                    if (!tbody) throw new Error(`HtmlControls.Table.bodyElement: Table body element not found for ID '${this.id}'.`);
+                    return tbody;
+                }
+
+                get headRows() { return Array.from(this.headElement.querySelectorAll('tr')); }
+                get bodyRows() { return Array.from(this.bodyElement.querySelectorAll('tr')); }
+
+                create(parentElement, headersArray = null) {
+                    if (!parentElement) throw new Error("HtmlControls.Table.create: Parent element is null or undefined.");
+
+                    let table = HtmlManager.getElementById(this.id);
+                    if (table) throw new Error(`HtmlControls.Table.create: Table element with ID '${this.id}' already exists in the DOM.`);
+
+                    table = document.createElement('table');
+                    table.id = this.id;
+
+                    const thead = document.createElement('thead');
+                    if (headersArray && Array.isArray(headersArray) && headersArray.length > 0) {
+                        const tr = document.createElement('tr');
+                        headersArray.forEach(text => {
+                            const th = document.createElement('th');
+                            HtmlManager.setText(th, text);
+                            HtmlManager.appendChild(tr, th);
+                        });
+                        HtmlManager.appendChild(thead, tr);
+                    }
+
+                    HtmlManager.appendChild(table, thead);
+                    HtmlManager.appendChild(table, document.createElement('tbody'));
+
+                    const parentEl = parentElement instanceof HtmlBase.Control ? parentElement.element : parentElement;
+                    HtmlManager.appendChild(parentEl, table);
+                    return this;
+                }
+
+                addHead(headersArray) {
+                    if (!headersArray || !Array.isArray(headersArray) || headersArray.length === 0)
+                        throw new Error(`HtmlControls.Table.addHead: Expected a non-empty array of headers for ID '${this.id}'.`);
+
+                    let thead = HtmlManager.getChildBySelector(this.element, 'thead');
+                    if (thead) throw new Error(`HtmlControls.Table.addHead: Table head already exists for ID '${this.id}'.`);
+
+                    const tr = document.createElement('tr');
+                    headersArray.forEach(text => {
+                        const th = document.createElement('th');
+                        HtmlManager.setText(th, text);
+                        HtmlManager.appendChild(tr, th);
+                    });
+
+                    thead = document.createElement('thead');
+                    HtmlManager.appendChild(thead, tr);
+                    HtmlManager.prependChild(this.element, thead);
+                    return this;
+                }
+
+                addRow(htmlRow) {
+                    if (!htmlRow) throw new Error("HtmlControls.Table.addRow: HTML row is null or undefined.");
+                    HtmlManager.appendChild(this.bodyElement, htmlRow);
+                    return this;
+                }
+
+                addDataRow(dataArray) {
+                    if (!dataArray) throw new Error("HtmlControls.Table.addDataRow: Data array is null or undefined.");
+
+                    const tr = document.createElement('tr');
+                    if (Array.isArray(dataArray)) {
+                        dataArray.forEach(text => {
+                            const td = document.createElement('td');
+                            HtmlManager.setText(td, text);
+                            HtmlManager.appendChild(tr, td);
+                        });
+                    }
+                    return this.addRow(tr);
+                }
+
+                addRows(htmlRowsArray) {
+                    if (!htmlRowsArray || !Array.isArray(htmlRowsArray)) throw new Error("HtmlControls.Table.addRows: Expected an array of HTML rows.");
+                    htmlRowsArray.forEach(row => this.addRow(row));
+                    return this;
+                }
+
+                addDataRows(dataArrays) {
+                    if (!dataArrays || !Array.isArray(dataArrays)) throw new Error("HtmlControls.Table.addDataRows: Expected an array of data arrays.");
+                    dataArrays.forEach(dataArray => this.addDataRow(dataArray));
+                    return this;
+                }
+
+                fill(htmlRowsArray) { this.clear(); return this.addRows(htmlRowsArray); }
+                fillData(dataArrays) { this.clear(); return this.addDataRows(dataArrays); }
+                clear() { HtmlManager.setInnerHTML(this.bodyElement, ""); return this; }
+            }
+
+            // === FORM CONTROLS ===
+            static Button = class extends HtmlBase.FormControl { constructor(id) { super(id); } }
+            static Input = class extends HtmlBase.FormControl { constructor(id) { super(id); } }
+            static Select = class extends HtmlBase.FormControl { constructor(id) { super(id); } }
+            static TextArea = class extends HtmlBase.FormControl { constructor(id) { super(id); } }
+
+            static Checkbox = class extends HtmlBase.FormControl {
+                constructor(id) { super(id); }
+                setChecked(isChecked) { HtmlManager.setChecked(this.element, isChecked); return this; }
+                getChecked() { return HtmlManager.getChecked(this.element); }
+            }
+
+            static Radio = class extends HtmlBase.FormControl {
+                constructor(id) { super(id); }
+                setChecked(isChecked) { HtmlManager.setChecked(this.element, isChecked); return this; }
+                getChecked() { return HtmlManager.getChecked(this.element); }
+            }
+
+            // === TEXT CONTROLS ===
+            static Heading = class extends HtmlBase.TextControl { constructor(id) { super(id); } }
+            static Paragraph = class extends HtmlBase.TextControl { constructor(id) { super(id); } }
+            static Label = class extends HtmlBase.TextControl { constructor(id) { super(id); } }
+        }
+
+        class GdcPageMng {
+            static status = "";
+
+            static showLoading() {
+                document.body.style.cursor = "wait";
+            }
+            static hideLoading() {
+                document.body.style.cursor = "default";
+            }
+
+            static get() {
+                return document.body;
+            }
+
+            static show() {
+                HtmlManager.show(this.get());
+            }
+
+            static hide() {
+                HtmlManager.hide(this.get());
+            }
+
+            static init() {
+                this.show();
+            }
+
+            static setStatus(status) {
+                let body = this.get();
+                HtmlManager.removeClass(body, "status-" + this.status);
+                HtmlManager.addClass(body, "status-" + status);
+
+                switch (status) {
+                    case "opened":
+                        break;
+                    case "importingFile":
+                    case "loadingFile":
+                        break;
+                    case "addingAccount":
+                    case "editingAccount":
+                        this.addAccountTopButton.hide();
+                        break;
+                    case "closed":
+                        break;
+                    default:
+                        throw new Error("GdcPageMng.setStatus: Invalid status " + status);
+                }
+
+                this.menuBar.setStatus(status);
+                this.mainContainer.setStatus(status);
+                this.menuBarBottom.setStatus(status);
+                this.status = status;
+            }
+
+            static open() {
+                this.setStatus("opened");
+            }
+
+            static close() {
+                this.setStatus("closed");
+            }
+
+            static reset() {
+                this.setStatus("closed");
+            }
+
+            static menuBar = class {
+
+                static get() {
+                    return HtmlManager.getElementById("containerMenuBar");
+                }
+
+                static show() {
+                    HtmlManager.show(this.get());
+                }
+
+                static hide() {
+                    HtmlManager.hide(this.get());
+                }
+
+                static setStatus(status) {
+                    switch (status) {
+                        case "opened":
+                            this.show();
+                            this.saveButton.show();
+                            this.addAccountTopButton.show();
+                            break;
+                        case "importingFile":
+                        case "loadingFile":
+                            break;
+                        case "addingAccount":
+                        case "editingAccount":
+                            this.addAccountTopButton.hide();
+                            break;
+                        case "closed":
+                            this.hide();
+                            this.saveButton.hide();
+                            this.addAccountTopButton.hide();
+                            break;
+                        default:
+                            throw new Error("menuBar.setStatus: Invalid status " + status);
+                    }
+                }
+
+                static countDownField = class {
+
+                    static get() {
+                        return HtmlManager.getElementById("fieldCountdown");
+                    }
+
+                    static setInStart() {
+                        const element = this.get();
+                        HtmlManager.removeClass(element, "paused");
+                        HtmlManager.addClass(element, "running");
+                    }
+
+                    static setInPause() {
+                        const element = this.get();
+                        HtmlManager.removeClass(element, "running");
+                        HtmlManager.addClass(element, "paused");
+                    }
+
+                    static input = class {
+
+                        static get() {
+                            return HtmlManager.getElementById("txtCountdown");
+                        }
+
+                        static get value() {
+                            return TimeManager.toSeconds(this.get().value);
+                        }
+                        static set value(value) {
+                            this.get().value = TimeManager.format(value);
+                        }
+
+                        // Pierde el foco
+                        static blur() {
+                            this.get().blur();
+                        }
+                    }
+                }
+
+                static saveButton = class {
+                    static get() {
+                        return HtmlManager.getElementById("btnSave")
+                    }
+
+                    static show() {
+                        HtmlManager.show(this.get());
+                    }
+
+                    static hide() {
+                        HtmlManager.hide(this.get());
+                    }
+                }
+
+                static addAccountTopButton = class {
+                    static get() {
+                        return HtmlManager.getElementById("btnAddAccountTop")
+                    }
+
+                    static show() {
+                        HtmlManager.show(this.get());
+                    }
+
+                    static hide() {
+                        HtmlManager.hide(this.get());
+                    }
+                }
+            }
+
+            static mainContainer = class {
+                static get() {
+                    return HtmlManager.getElementById("containerMain")
+                }
+
+                static open() {
+                    HtmlManager.addClass(this.get(), "opened");
+                    HtmlManager.removeClass(this.get(), "editing")
+                }
+
+                static close() {
+                    HtmlManager.removeClass(this.get(), "editing")
+                    HtmlManager.removeClass(this.get(), "opened");
+                }
+
+                static setStatus(status) {
+                    switch (status) {
+                        case "opened":
+                            this.open();
+                            break;
+                        case "importingFile":
+                        case "loadingFile":
+                            break;
+                        case "addingAccount":
+                        case "editingAccount":
+                            HtmlManager.addClass(this.get(), "editing");
+                            this.mainTable.editRow.show();
+                            break;
+                        case "closed":
+                            this.close();
+                            break;
+                        default:
+                            throw new Error("GdcPageMng.setStatus: Invalid status " + status);
+                    }
+                    this.mainMenu.setStatus(status);
+                    this.mainTable.setStatus(status);
+                }
+
+                static mainMenu = class {
+
+                    static open() {
+                        this.passwordField.open();
+                        this.autosaveField.show();
+                        this.newPasswordButton.show();
+                        this.loadFileInput.hide();
+                        this.loadFileButton.show();
+                    }
+
+                    static close() {
+                        this.passwordField.close();
+                        this.autosaveField.hide();
+                        this.newPasswordButton.show();
+                        this.loadFileInput.hide();
+                        this.loadFileButton.show();
+                    }
+
+                    static setStatus(status) {
+                        switch (status) {
+                            case "opened":
+                                this.open();
+                                break;
+                            case "importingFile":
+                                this.autosaveField.hide();
+                                this.newPasswordButton.hide();
+                                this.loadFileInput.show();
+                                this.loadFileButton.hide();
+                                break;
+                            case "loadingFile":
+                                this.passwordField.hide();
+                                this.loadFileInput.show();
+                                break;
+                            case "addingAccount":
+                            case "editingAccount":
+                                break;
+                            case "closed":
+                                this.close();
+                                break;
+                            default:
+                                throw new Error("GdcPageMng.mainContainer.mainMenu.setStatus: Invalid status " + status);
+                        }
+
+                        this.passwordField.setStatus(status);
+                    }
+
+                    static passwordField = class {
+
+                        static get() {
+                            return document.getElementById("containerDecryptPassword");
+                        }
+
+                        static show() {
+                            this.get().classList.remove("hidden");
+                        }
+
+                        static hide() {
+                            this.get().classList.add("hidden");
+                        }
+
+                        static open() {
+                            this.show();
+                            this.hidePassword();
+                            this.changeButton.show();
+                            this.nextButton.show();
+                        }
+
+                        static close() {
+                            this.changeButton.hide();
+                            this.nextButton.show();
+                            this.clear();
+                            this.show();
+                        }
+
+                        static clear() {
+                            this.input.clear();
+                            this.hidePassword();
+                        }
+
+                        static showPassword() {
+                            this.input.showPassword();
+                            this.toggleViewButton.setStatus("showedPassword");
+
+                            // Iniciar contador de 15 segundos para ocultar la contraseña
+                            setTimeout(() => {
+                                this.hidePassword();
+                            }, 15000); // 15000 milisegundos = 15 segundos
+                        }
+
+                        static hidePassword() {
+                            this.input.hidePassword();
+                            this.toggleViewButton.setStatus("hiddenPassword");
+                        }
+
+                        static togglePassword() {
+                            if (this.input.isVisible) {
+                                this.hidePassword();
+                            }
+                            else {
+                                this.showPassword();
+                            }
+                        }
+
+                        static setStatus(status) {
+                            switch (status) {
+                                case "opened":
+                                    this.open();
+                                    break;
+                                case "importingFile":
+                                    this.nextButton.show();
+                                    this.changeButton.hide();
+                                    break;
+                                case "loadingFile":
+                                    this.show();
+                                    this.clear();
+                                    this.nextButton.show();
+                                    this.changeButton.hide();
+                                    break;
+                                case "addingAccount":
+                                case "editingAccount":
+                                    this.nextButton.hide();
+                                    this.changeButton.hide();
+                                    break;
+                                case "closed":
+                                    this.close();
+                                    break;
+                                default:
+                                    throw new Error("GdcPageMng.mainContainer.mainMenu.passwordField.setStatus: Invalid status " + status);
+                            }
+                        }
+
+                        static input = class {
+
+                            static get() {
+                                return document.getElementById("txtDecryptPassword");
+                            }
+
+                            static get isVisible() {
+                                return this.get().type === "text";
+                            }
+
+                            static showPassword() {
+                                this.get().type = "text";
+                            }
+
+                            static hidePassword() {
+                                this.get().type = "password";
+                            }
+
+                            static get value() {
+                                return this.get().value;
+                            }
+                            static set value(value) {
+                                this.get().value = value;
+                            }
+
+                            static get type() {
+                                return this.get().type;
+                            }
+                            static set type(value) {
+                                this.get().type = value;
+                            }
+
+                            static clear() {
+                                this.get().value = ""; // Limpiar el campo de contraseña
+                            }
+                        }
+
+                        static toggleViewButton = class {
+                            static get() {
+                                return document.getElementById("btnToggleDecryptPassword")
+                            }
+
+                            static get text() {
+                                return this.get().textContent;
+                            }
+
+                            static set text(text) {
+                                this.get().textContent = text;
+                            }
+
+                            static setStatus(status) {
+                                switch (status) {
+                                    case "showedPassword":
+                                        this.text = "🙈";
+                                        break;
+                                    case "hiddenPassword":
+                                        this.text = "👁️";
+                                        break;
+                                    default:
+                                        throw new Error("GdcPageMng.mainContainer.mainMenu.passwordField.setStatus: Invalid status " + status);
+                                }
+                            }
+                        }
+
+                        static changeButton = class {
+                            static get() {
+                                return document.getElementById("btnChangeDecryptPassword")
+                            }
+
+                            static show() {
+                                this.get().classList.remove("hidden");
+                            }
+
+                            static hide() {
+                                this.get().classList.add("hidden");
+                            }
+                        }
+
+                        static nextButton = class {
+                            static get() {
+                                return document.getElementById("btnNext")
+                            }
+
+                            static show() {
+                                this.get().classList.remove("hidden");
+                            }
+
+                            static hide() {
+                                this.get().classList.add("hidden");
+                            }
+                        }
+                    }
+
+                    static autosaveField = class {
+
+                        static get() {
+                            return document.getElementById("containerAutosave")
+                        }
+
+                        static show() {
+                            this.get().classList.remove("hidden");
+                        }
+
+                        static hide() {
+                            this.get().classList.add("hidden");
+                        }
+
+                        static checkbox = class {
+                            static get() {
+                                return document.getElementById("chkAutosave");
+                            }
+
+                            static get isChecked() {
+                                return this.get().checked
+                            }
+                        }
+                    }
+
+                    static newPasswordButton = class {
+                        static get() {
+                            return document.getElementById("btnNewDecryptPassword")
+                        }
+
+                        static show() {
+                            this.get().classList.remove("hidden");
+                        }
+
+                        static hide() {
+                            this.get().classList.add("hidden");
+                        }
+                    }
+
+                    static loadFileInput = class {
+                        static get() {
+                            return document.getElementById("inputLoadFile")
+                        }
+
+                        static show() {
+                            this.get().classList.remove("hidden");
+                        }
+
+                        static hide() {
+                            this.get().classList.add("hidden");
+                        }
+                    }
+
+                    static loadFileButton = class {
+                        static get() {
+                            return document.getElementById("btnLoad")
+                        }
+
+                        static show() {
+                            this.get().classList.remove("hidden");
+                        }
+
+                        static hide() {
+                            this.get().classList.add("hidden");
+                        }
+                    }
+                }
+
+                static mainTable = class {
+
+                    static get() {
+                        return HtmlManager.getElementById("tblMain");
+                    }
+
+                    static show() {
+                        HtmlManager.show(this.get());
+                    }
+
+                    static hide() {
+                        HtmlManager.hide(this.get());
+                    }
+
+                    static clear() {
+                        this.dataRows.clear();
+                        this.editRow.clear();
+                    }
+
+                    static close() {
+                        this.hide();
+                        this.clear();
+                    }
+
+                    static setStatus(status) {
+                        switch (status) {
+                            case "opened":
+                                this.show();
+                                break;
+                            case "importingFile":
+                            case "loadingFile":
+                            case "addingAccount":
+                            case "editingAccount":
+                                break;
+                            case "closed":
+                                this.close();
+                                break;
+                            default:
+                                throw new Error("GdcPageMng.setStatus: Invalid status " + status);
+                        }
+                    }
+
+                    static load(dataJson) {
+                        try {
+                            this.clear();
+                            let maxId = 0
+                            for (const rowData of dataJson) {
+                                const id = Number(rowData.id);
+                                this.addAccount(rowData);
+                                maxId = id > maxId ? id : maxId;
+                            }
+                            return maxId;
+                        }
+                        catch (error) {
+                            const errorMessage = "GdcPageMng.mainContainer.mainTable.load: Error loading data. The file may be corrupted or not in the expected format.\nError: " + error.message;
+                            //ConsoleManager.addError(errorMessage);
+                            AlertManager.showException(errorMessage);
+                            throw new Error(errorMessage);
+                        }
+                    }
+
+                    static newDataRow() {
+                        const newRow = this.editRow.get();
+                        HtmlManager.addClass(newRow, "new");
+                        this.bodyRows.add(newRow);
+                        this.dataRows.unselectAll();
+                        HtmlManager.show(newRow);
+                    }
+
+                    static insertDataRow(row) {
+                        const editRow = this.editRow.get();
+                        this.bodyRows.insertBefore(row, editRow);
+                    }
+
+                    static replaceDataRow(newRow, old) {
+                        this.bodyRows.replaceDataRow(row, editRow);
+                    }
+
+                    static addAccount(data) {
+                        this.insertDataRow(this.dataRows.dataRow.create(data));
+                    }
+
+                    static recreateEditRow() {
+                        const formRow = this.editRow.get();
+                        HtmlManager.removeClass(formRow, "new");
+                        HtmlManager.hide(formRow);
+                        this.editRow.clear();
+                        this.bodyRows.add(formRow);
+                    }
+
+                    static bodyRows = class {
+                        static get() {
+                            return HtmlManager.getElementByQuerySelector("#tblMain tbody");
+                        }
+
+                        static add(row) {
+                            this.get().appendChild(row);
+                        }
+
+                        static insertBefore(newRow, oldRow) {
+                            this.get().insertBefore(newRow, oldRow);
+                        }
+
+                        static replace(newRow, old) {
+                            this.get().replaceChild(newRow, oldRow);
+                            //this.insertBefore(newRow, oldRow);
+                            //oldRow.remove();
+                        }
+                    }
+
+                    static dataRows = class {
+                        static get() {
+                            return document.querySelectorAll("#tblMain .data-row");
+                        }
+
+                        static getSelectedRows() {
+                            return document.querySelector("#tblMain .data-row.selected");
+                        }
+
+                        static getArrayData() {
+                            const data = [];
+                            this.get().forEach((row) => {
+                                const rowData = this.dataRow.getData(row);
+                                data.push(rowData);
+                            });
+                            return data;
+                        }
+
+                        static getJsonData() {
+                            return JSON.stringify(this.getArrayData());
+                        }
+
+                        static unselectAll() {
+                            this.get().forEach((row) => {
+                                row.classList.remove("selected");
+                            });
+                        }
+
+                        static clear() {
+                            this.get().forEach((row) => {
+                                row.remove();
+                            });
+                        }
+
+                        static selectedRow = class {
+                            current = null;
+
+                            static set(row) {
+                                if (!row || !row.classList.contains("data-row")) {
+                                    throw new Error("GdcPageMng.mainContainer.mainTable.dataRows.selectedRow.set: The provided element is not a valid data row.");
+                                }
+
+                                if (this.current) {
+                                    this.current.classList.remove("selected");
+                                }
+
+                                row.classList.add("selected");
+                                this.current = row;
+                            }
+
+                            static moveUp() {
+                                if (this.current) {
+                                    const previousRow = this.current.previousElementSibling;
+                                    if (previousRow && previousRow.id !== "form-row") {
+                                        this.current.parentNode.insertBefore(this.current, previousRow);
+                                        return true;
+                                    }
+                                }
+                                return false;
+                            }
+
+                            static moveDown() {
+                                if (this.current) {
+                                    const nextRow = this.current.nextElementSibling;
+                                    if (nextRow && nextRow.id !== "form-row") {
+                                        this.current.parentNode.insertBefore(nextRow, this.current);
+                                        return true;
+                                    }
+                                }
+                                return false;
+                            }
+
+                            static clear() {
+                                if (this.current) {
+                                    this.current.classList.remove("selected");
+                                    this.current = null;
+                                }
+                            }
+                        }
+
+                        static dataRow = class {
+
+
+                            static getById(id) {
+                                return document.querySelector(`#tblMain .data-row[id="${id}"]`);
+                            }
+
+                            static show(row) {
+                                row.style.display = "table-row";
+                            }
+
+                            static hide(row) {
+                                row.style.display = "none";
+                            }
+
+                            static create(rowData) {
+                                const newRow = document.createElement("tr");
+                                newRow.id = rowData.id;
+                                newRow.classList.add("data-row");
+                                newRow.innerHTML = `
+                                                                <td class="hidden"><div><span class="field-label">Id:</span><span>${rowData.id}</span></div></td>
+                                                                <td class="site-name"><div><span class="field-label">Sitio:</span>${rowData.url ? `<a href="${rowData.url}" target="_blank" title="${rowData.url}"> ${rowData.name} </a>` : ""}</div></td>
+                                                                <td><div><span class="field-label" style="min-width: 64px">Usuario:</span><input type="text" value="${rowData.accountUser}" readonly></div></td>
+                                                                <td><div style="min-width: 64px"><span class="field-label">Password:</span><input type="password" class="encrypted-password" value="${rowData.accountPassword}" readonly><span class="btnTogglePassword btn-emoji">👁️</span></div></td>
+                                                                <td><div><span class="field-label">Notas:</span><span title="${rowData.notes}" style="text-align: justify;">${rowData.notes}</span></div></td>
+                                                                <td class="only-laptop"><div><span class="field-label">Creación:</span><span class="date">${rowData.createDate}</span></div></td>
+                                                                <td><div><span class="field-label">Actualización:</span><span class="date">${rowData.updateDate}</span></div></td>
+                                                                <td>
+                                                                    <div class="buttonPanel">
+                                                                        <button title="Editar" class="edit">✏️</button>
+                                                                        <button title="Eliminar" class="delete red">X</button>
+                                                                    </div>
+                                                                </td>
+                                                                `;
+                                return newRow;
+                            }
+
+                            static getData(row) {
+                                const data = {
+                                    id: row.children[0].children[0].children[1].innerText,
+                                    name: row.children[1].children[0].children[1].innerText,
+                                    url: row.children[1].querySelector("a")
+                                        ? row.children[1].children[0].querySelector("a").href
+                                        : "",
+                                    accountUser: row.children[2].children[0].children[1].value,
+                                    accountPassword: row.children[3].children[0].children[1].value,
+                                    notes: row.children[4].children[0].children[1].innerText,
+                                    createDate: row.children[5].children[0].children[1].innerText,
+                                    updateDate: row.children[6].children[0].children[1].innerText,
+                                };
+                                return data;
+                            }
+                        }
+                    }
+
+                    static editRow = class {
+                        static get() {
+                            return HtmlManager.getElementById("form-row");
+                        }
+
+                        static show() {
+                            HtmlManager.show(this.get());
+                        }
+
+                        static hide() {
+                            HtmlManager.hide(this.get());
+                            HtmlManager.removeClass(this.get(), "new");
+                            this.clear();
+                        }
+
+                        static setStatus(status) {
+                            switch (status) {
+                                case "show":
+                                    this.show();
+                                    break;
+                                case "hide":
+                                    this.hide();
+                                    break;
+                                case "new":
+                                    this.clear();
+                                    HtmlManager.show(this.get());
+                                    HtmlManager.addClass(this.get(), "new");
+                                    break;
+                                default:
+                                    throw new Error("GdcPageMng.mainContainer.mainTable.editRow.setStatus: Invalid status " + status);
+                            }
+                        }
+
+                        static getOriginal() {
+                            return HtmlManager.getElementById(document.getElementById("f-id").value);
+                        }
+
+                        static showOriginal() {
+                            const originalRow = this.getOriginal();
+                            if (originalRow) {
+                                HtmlManager.show(originalRow);
+                            }
+                        }
+
+                        static getData() {
+                            let id = this.get().getElementById("f-id").value;
+                            if (!Number.isInteger(parseInt(id))) {
+                                id = 0; // Asignar un valor por defecto en caso de que el id no sea un entero
+                            }
+
+                            const now = DateManager.getCurrentDateString();
+                            const result = {
+                                id: id,
+                                name: HtmlManager.getElementById("f-name").value,
+                                url: URLManager.ensureProtocol(HtmlManager.getElementById("f-url").value),
+                                accountUser: HtmlManager.getElementById("f-user").value,
+                                accountPassword: HtmlManager.getElementById("f-password").value,
+                                notes: HtmlManager.getElementById("f-notes").value,
+                                createDate: HtmlManager.getElementById("f-createDate").value || now,
+                                updateDate: now
+                            };
+                            return result;
+                        }
+
+                        static fill(data) {
+                            HtmlManager.getElementById("f-id").value = data.id;
+                            HtmlManager.getElementById("f-name").value = data.name;
+                            HtmlManager.getElementById("f-url").value = data.url;
+                            HtmlManager.getElementById("f-user").value = data.accountUser;
+                            HtmlManager.getElementById("f-password").value = data.accountPassword;
+                            HtmlManager.getElementById("f-notes").value = data.notes;
+                            HtmlManager.getElementById("f-createDate").value = data.createDate;
+                            HtmlManager.getElementById("f-updateDate").value = data.updateDate;
+                        }
+
+                        static clear() {
+                            HtmlManager.getElementById("f-id").value = "";
+                            HtmlManager.getElementById("f-name").value = "";
+                            HtmlManager.getElementById("f-url").value = "";
+                            HtmlManager.getElementById("f-user").value = "";
+                            HtmlManager.getElementById("f-password").value = "";
+                            HtmlManager.getElementById("f-notes").value = "";
+                            HtmlManager.getElementById("f-createDate").value = "";
+                            HtmlManager.getElementById("f-updateDate").value = "";
+                        }
+                    }
+                }
+            }
+
+            static menuBarBottom = class {
+
+                static get() {
+                    return HtmlManager.getElementById("containerMenuBarBottom");
+                }
+
+                static show() {
+                    HtmlManager.show(this.get());
+                }
+
+                static hide() {
+                    HtmlManager.hide(this.get());
+                }
+
+                static setStatus(status) {
+                    switch (status) {
+                        case "opened":
+                            this.show();
+                            this.addAccountButton.show();
+                            break;
+                        case "importingFile":
+                        case "loadingFile":
+                            break;
+                        case "addingAccount":
+                        case "editingAccount":
+                            this.addAccountButton.hide();
+                            break;
+                        case "closed":
+                            this.hide();
+                            this.addAccountButton.hide();
+                            break;
+                        default:
+                            throw new Error("GdcPageMng.setStatus: Invalid status " + status);
+                    }
+                }
+
+                static addAccountButton = class {
+                    static get() {
+                        return HtmlManager.getElementById("btnAddAccount")
+                    }
+
+                    static show() {
+                        HtmlManager.show(this.get());
+                    }
+
+                    static hide() {
+                        HtmlManager.hide(this.get());
+                    }
+                }
+            }
+        }
+
+        class CryptoAESGCM {
+            static async getKey(password) {
+                const enc = new TextEncoder();
+                const keyMaterial = enc.encode(password);
+                const keyHash = await crypto.subtle.digest("SHA-256", keyMaterial);
+                return crypto.subtle.importKey(
+                    "raw",
+                    keyHash,
+                    { name: "AES-GCM" },
+                    false,
+                    ["encrypt", "decrypt"]
+                );
+            }
+
+            static async encrypt(data, password) {
+                let result = null;
+                if (data) {
+                    try {
+                        const key = await this.getKey(password);
+                        const iv = crypto.getRandomValues(new Uint8Array(12));
+                        const enc = new TextEncoder();
+                        const encrypted = await crypto.subtle.encrypt({
+                            name: "AES-GCM",
+                            iv: iv
+                        },
+                            key,
+                            enc.encode(data)
+                        );
+                        const encryptText = JSON.stringify({
+                            iv: Array.from(iv),
+                            data: Array.from(new Uint8Array(encrypted)),
+                        });
+                        result = StringManager.toBase64(encryptText);
+                    }
+                    catch (error) {
+                        const errorMessage = "CryptoAESGCM.encrypt: Error> " + error.message;
+                        ConsoleManager.addError(errorMessage);
+                        throw new Error(errorMessage);
+                    }
+                }
+                else {
+                    result = "";
+                }
+                return result;
+            }
+
+            static async decrypt(encryptedData, password) {
+                let result = null;
+                if (encryptedData) {
+                    try {
+                        const encryptedText = StringManager.fromBase64(encryptedData);
+                        const { iv, data } = JSON.parse(encryptedText);
+                        const key = await this.getKey(password);
+                        const decrypted = await crypto.subtle.decrypt(
+                            { name: "AES-GCM", iv: new Uint8Array(iv) },
+                            key,
+                            new Uint8Array(data)
+                        );
+                        const dec = new TextDecoder();
+                        result = dec.decode(decrypted);
+                    }
+                    catch (error) {
+                        const errorMessage = "CryptoAESGCM.decrypt: Error> " + error.message;
+                        ConsoleManager.addError(errorMessage);
+                        throw new Error(errorMessage);
+                    }
+
+                }
+                else {
+                    result = "";
+                }
+                return result;
+            }
+        }
+
+        class CryptoPBKDF2 {
+            /**
+             * Deriva una clave AES-GCM-256 robusta aplicando 100,000 iteraciones de PBKDF2 + SHA-256
+             */
+            static async getKey(password, salt) {
+                const enc = new TextEncoder();
+                const passwordBytes = enc.encode(password);
+
+                // 1. Importar la contraseña como material de clave base
+                const baseKey = await crypto.subtle.importKey(
+                    "raw",
+                    passwordBytes,
+                    { name: "PBKDF2" },
+                    false,
+                    ["deriveKey"]
+                );
+
+                // 2. Derivar la clave simétrica final usando el Salt y las iteraciones
+                return crypto.subtle.deriveKey(
+                    {
+                        name: "PBKDF2",
+                        salt: salt,
+                        iterations: 100000,
+                        hash: "SHA-256"
+                    },
+                    baseKey,
+                    { name: "AES-GCM", length: 256 },
+                    false,
+                    ["encrypt", "decrypt"]
+                );
+            }
+
+            static async encrypt(data, password) {
+                let result = null;
+                if (data) {
+                    try {
+                        // Generar Salt (16 bytes) e IV (12 bytes) aleatorios y seguros
+                        const salt = crypto.getRandomValues(new Uint8Array(16));
+                        const iv = crypto.getRandomValues(new Uint8Array(12));
+
+                        const key = await this.getKey(password, salt);
+                        const enc = new TextEncoder();
+
+                        const encrypted = await crypto.subtle.encrypt(
+                            { name: "AES-GCM", iv: iv },
+                            key,
+                            enc.encode(data)
+                        );
+
+                        // Estructurar incluyendo el 'salt' esencial para PBKDF2
+                        const encryptText = JSON.stringify({
+                            salt: Array.from(salt),
+                            iv: Array.from(iv),
+                            data: Array.from(new Uint8Array(encrypted)),
+                        });
+                        result = StringManager.toBase64(encryptText);
+                    }
+                    catch (error) {
+                        const errorMessage = "CryptoPBKDF2.encrypt: Error> " + error.message;
+                        ConsoleManager.addError(errorMessage);
+                        throw new Error(errorMessage);
+                    }
+                }
+                else {
+                    result = "";
+                }
+                return result;
+            }
+
+            static async decrypt(encryptedData, password) {
+
+                let result = null;
+                if (encryptedData) {
+                    try {
+                        const encryptedText = StringManager.fromBase64(encryptedData);
+                        const { salt, iv, data } = JSON.parse(encryptedText);
+
+                        // Recuperar el Salt e IV en sus formatos nativos
+                        const saltBuffer = new Uint8Array(salt);
+                        const ivBuffer = new Uint8Array(iv);
+                        const dataBuffer = new Uint8Array(data);
+
+                        // Volver a derivar la clave usando el salt exacto del archivo
+                        const key = await this.getKey(password, saltBuffer);
+                        const decrypted = await crypto.subtle.decrypt(
+                            { name: "AES-GCM", iv: ivBuffer },
+                            key,
+                            dataBuffer
+                        );
+
+                        const dec = new TextDecoder();
+                        result = dec.decode(decrypted);
+                    }
+                    catch (error) {
+                        const errorMessage = "CryptoPBKDF2.decrypt: Error> " + error.message;
+                        ConsoleManager.addError(errorMessage);
+                        throw new Error(errorMessage);
+                    }
+                }
+                else {
+                    result = "";
+                }
+                return result;
+            }
+
+            // static async decrypt(encryptedData, password) {
+            //     let result = null;
+            //     if (encryptedData) {
+            //         try {
+            //             // 1. Decodificar Base64 original
+            //             const encryptedText = StringManager.fromBase64(encryptedData);
+
+            //             // 2. Intentar parsear el JSON de manera segura
+            //             let parsed;
+            //             try {
+            //                 parsed = JSON.parse(encryptedText);
+            //             } catch (e) {
+            //                 // Si no es un JSON, significa que los datos almacenados eran un texto plano/antiguo
+            //                 throw new Error("El formato del texto cifrado es antiguo o corrupto (no es un objeto JSON).");
+            //             }
+
+            //             // 3. Comprobar de forma segura si existen las propiedades deseadas
+            //             // Nota: Usamos 'hasOwn' o validación directa para evitar excepciones catastróficas
+            //             if (!parsed || typeof parsed !== 'object' || !('salt' in parsed) || !('iv' in parsed) || !('data' in parsed)) {
+            //                 console.error("Estructura JSON inválida detectada:", parsed);
+            //                 throw new Error("El JSON no contiene las propiedades requeridas ('salt', 'iv', 'data').");
+            //             }
+
+            //             // 4. Convertir de forma segura garantizando arreglos numéricos planos
+            //             const saltArray = Array.isArray(parsed.salt) ? parsed.salt : Object.values(parsed.salt);
+            //             const ivArray = Array.isArray(parsed.iv) ? parsed.iv : Object.values(parsed.iv);
+            //             const dataArray = Array.isArray(parsed.data) ? parsed.data : Object.values(parsed.data);
+
+            //             // 5. Reconstruir buffers nativos
+            //             const saltBuffer = new Uint8Array(saltArray);
+            //             const ivBuffer = new Uint8Array(ivArray);
+            //             const dataBuffer = new Uint8Array(dataArray);
+
+            //             // 6. Volver a derivar la clave usando el salt extraído del propio JSON
+            //             const key = await this.getKey(password, saltBuffer);
+
+            //             // 7. Desencriptar usando la Web Crypto API del navegador
+            //             // NOTA: Asegúrate de usar 'window.crypto' para evitar ambigüedades en ciertos entornos
+            //             const decrypted = await window.crypto.subtle.decrypt(
+            //                 { name: "AES-GCM", iv: ivBuffer },
+            //                 key,
+            //                 dataBuffer
+            //             );
+
+            //             const dec = new TextDecoder();
+            //             result = dec.decode(decrypted);
+            //         }
+            //         catch (error) {
+            //             ConsoleManager.addError("CryptoPBKDF2.decrypt: Error> " + error.message);
+            //             throw new Error("Error al desencriptar: " + error.message);
+            //         }
+            //     }
+            //     else {
+            //         result = "";
+            //     }
+            //     return result;
+            // }
+        }
+
+        class GdcCryptoMng {
+            static #obfuscationKey = null;
+            static #encryptionKey = null;
+            static #method = null;
+            static #encryptMethods = ["PBKDF2", "AES-GCM"];
+
+            static get encryptionKey() {
+                return StringManager.decrypt(this.#encryptionKey, this.#obfuscationKey);;
+            }
+
+            static set encryptionKey(value) {
+                this.#encryptionKey = StringManager.encrypt(value, this.#obfuscationKey);
+            }
+
+            static get isInitialized() {
+                return this.#obfuscationKey && this.#method;
+            }
+
+            static init(obfuscationKey, method = "PBKDF2") {
+                if (method && !this.#encryptMethods.includes(method)) {
+                    throw new Error(`GdcCryptoMng.init: Unsupported encryption method "${method}". Supported methods are: ${this.#encryptMethods.join(", ")}`);
+                }
+                this.#method = method;
+                this.#obfuscationKey = obfuscationKey;
+            }
+
+            static async encrypt(text) {
+                let result = null;
+                try {
+                    if (!this.isInitialized) {
+                        throw new Error("GdcCryptoMng.encrypt: GdcCryptoMng is not initialized. Please call GdcCryptoMng.init() before using encryption methods.");
+                    }
+                    if (!this.#encryptionKey) {
+                        throw new Error("GdcCryptoMng.encrypt: GdcCryptoMng key is not set. Please call GdcCryptoMng.key = <key> before using encryption methods.");
+                    }
+                    switch (this.#method) {
+                        case "PBKDF2":
+                            result = await CryptoPBKDF2.encrypt(text, this.encryptionKey);
+                            break;
+                        case "AES-GCM":
+                            result = await CryptoAESGCM.encrypt(text, this.#encryptionKey);
+                            break;
+                        default:
+                            throw new Error(`GdcCryptoMng.encrypt: Unsupported encryption method "${this.#method}".`);
+                    }
+                }
+                catch (error) {
+                    const errorMessage = "GdcCryptoMng.encryptText: " + error.message;
+                    ConsoleManager.addError(errorMessage);
+                    AlertManager.showException(errorMessage);
+                }
+                return result;
+            }
+
+            static async decrypt(text) {
+                try {
+                    return await CryptoPBKDF2.decrypt(text, this.encryptionKey);
+                } catch (error) {
+                    try {
+                        const legacyDecrypted = await CryptoAESGCM.decrypt(text, this.encryptionKey);
+
+                        ConsoleManager.addLog("GdcCryptoMng.decrypt: Notice: This file contains an older format that has been decrypted. It will be updated to the new standard upon saving.");
+                        return legacyDecrypted;
+                    } catch (legacyError) {
+                        const errorMessage = `GdcCryptoMng.decrypt: Error decrypting with both methods. The file may be corrupted or the password is incorrect.\nError:${legacyError.message}`;
+                        ConsoleManager.addError(errorMessage);
+                        AlertManager.showException(errorMessage);
+                        return null; // Buena práctica devolver null si no se pudo descifrar de ninguna forma
+                    }
+                }
+            }
+        }
+
+        class GdcLocalStorageMng {
+
+            static #versionKey = "gdcVersion";
+
+            static get appVersion() {
+                let result = null;
+                const storedValue = sessionStorage.getItem(this.#versionKey);
+                if (storedValue) {
+                    result = parseInt(storedValue, 10);
+                }
+                return result;
+            }
+
+            static set appVersion(value) {
+                sessionStorage.setItem(this.#versionKey, value);
+            }
+
+            static get isInitialized() {
+                return this.appVersion !== null;
+            }
+
+            static init(version, maxAttempts) {
+                if (version === undefined || version === null) {
+                    throw new Error("GdcSessionStorageMng.init: version is required");
+                }
+
+                if (this.appVersion !== version) {
+                    this.remove();
+                    this.appVersion = version;
+                }
+
+                this.validatePasswordAttempt.init(maxAttempts);
+                this.accountData.init();
+            }
+
+            static close() {
+                this.validatePasswordAttempt.reset();
+            }
+
+            static reset() {
+                this.validatePasswordAttempt.reset();
+                this.accountData.remove();
+            }
+
+            static remove() {
+                this.validatePasswordAttempt.remove();
+                this.accountData.remove();
+                sessionStorage.removeItem(this.#versionKey);
+            }
+
+            static validatePasswordAttempt = class {
+
+                static key = "gdcAttemptValidatePassword";
+
+                static #maxAttempts = -1;
+
+                static get value() {
+                    const attemptStr = localStorage.getItem(this.key);
+                    if (attemptStr) {
+                        return parseInt(attemptStr, 10);
+                    }
+
+                    this.value = this.#maxAttempts;
+                    return this.#maxAttempts;
+                }
+
+                static set value(value) {
+                    localStorage.setItem(this.key, value);
+                }
+
+                static init(maxAttempts) {
+                    if (maxAttempts === undefined || maxAttempts === null || maxAttempts === "") {
+                        throw new Error("GdcLocalStorageMng.validatePasswordAttempt.init: maxAttempts is required");
+                    }
+
+                    const parsed = parseInt(maxAttempts, 10);
+                    if (isNaN(parsed) || parsed <= 0) {
+                        throw new Error("GdcLocalStorageMng.validatePasswordAttempt.init: maxAttempts must be a positive integer and not zero");
+                    }
+                    this.#maxAttempts = parsed;
+                }
+
+                static decrease() {
+                    let result = this.#maxAttempts;
+                    const attemptStr = this.value;
+                    if (attemptStr)
+                        result = parseInt(attemptStr);
+
+                    if (result > 0)
+                        result--;
+
+                    this.set(result);
+
+                    ConsoleManager.addLog("GdcLocalStorageMng.validatePasswordAttempt.decrease: " + result);
+                    return result;
+                }
+
+                static reset() {
+                    let result = this.#maxAttempts;
+                    this.value = result;
+                    ConsoleManager.addLog("GdcLocalStorageMng.validatePasswordAttempt.reset: " + result);
+                    return result;
+                }
+
+                static remove() {
+                    localStorage.removeItem(this.key);
+                }
+            };
+
+            static accountData = class {
+
+                static key = "gdcTableData";
+
+                static async get() {
+                    try {
+                        let text = localStorage.getItem(this.key);
+                        console.log("GdcLocalStorageMng.accountData.get: GdcCryptoMng.decrypt.");
+                        text = await GdcCryptoMng.decrypt(text);
+                        const json = JSON.parse(text);
+                        return json;
+                    }
+                    catch (error) {
+                        const errorMessage = "GdcLocalStorageMng.accountData.get: Error getting or decrypting account data from local storage: " + error.message;
+                        ConsoleManager.addError(errorMessage);
+                        AlertManager.showException(errorMessage);
+                        return null;
+                    }
+                }
+
+                static async set(json) {
+                    const encryptedData = await GdcCryptoMng.encrypt(json);
+                    localStorage.setItem(this.key, encryptedData);
+                }
+
+                static exists() {
+                    return this.get() ? true : false;
+                }
+
+                static init() {
+                    //
+                }
+
+                static remove() {
+                    localStorage.removeItem(this.key);
+                }
+            };
+        }
+
+        class GdcSessionStorageMng {
+
+            static #versionKey = "gdcVersion";
+
+            static get appVersion() {
+                let result = null;
+                const storedValue = sessionStorage.getItem(this.#versionKey);
+                if (storedValue) {
+                    result = parseInt(storedValue, 10);
+                }
+                return result;
+            }
+
+            static set appVersion(value) {
+                sessionStorage.setItem(this.#versionKey, value);
+            }
+
+            static get isInitialized() {
+                return this.appVersion !== null;
+            }
+
+            static init(version, defaultSessionTimeLeft, sessionKey) {
+                if (version === undefined || version === null) {
+                    throw new Error("GdcSessionStorageMng.init: version is required");
+                }
+
+                if (this.appVersion !== version) {
+                    this.remove();
+                    this.appVersion = version;
+                }
+
+                this.sessionKey.init(sessionKey);
+                this.sessionTimeLeft.init(defaultSessionTimeLeft);
+            }
+
+            static reset() {
+                this.sessionTimeLeft.reset();
+            }
+
+            static remove() {
+                this.sessionTimeLeft.remove();
+                sessionStorage.removeItem(this.#versionKey);
+            }
+
+            static sessionKey = class {
+
+                static #valueKey = "gdcSessionKey";
+
+                static get value() {
+                    return sessionStorage.getItem(this.#valueKey);
+                }
+
+                static set value(value) {
+                    sessionStorage.setItem(this.#valueKey, value);
+                }
+
+                static get isInitialized() {
+                    return this.value !== null;
+                }
+
+                static init(sessionKey) {
+                    if (!sessionKey) {
+                        throw new Error("GdcSessionStorageMng.sessionTimeLeft.init: sessionKey is required");
+                    }
+                    this.value = sessionKey;
+                }
+
+                static remove() {
+                    sessionStorage.removeItem(this.#valueKey);
+                }
+            };
+
+            static sessionTimeLeft = class {
+
+                static #defaultValueKey = "gdcDefaultTimeLeft";
+                static #timeLeftKey = "gdcTimeLeft";
+
+                // Devuelve el valor en segundos
+                static get defaultValue() {
+                    let result = null;
+                    const defaultStoredTime = sessionStorage.getItem(this.#defaultValueKey);
+                    if (defaultStoredTime) {
+                        result = parseInt(defaultStoredTime, 10); // Buen hábito: añadir la base 10
+                    }
+                    return result;
+                }
+
+                static set defaultValue(value) {
+                    sessionStorage.setItem(this.#defaultValueKey, value);
+                }
+
+                // Devuelve el valor en segundos
+                static get value() {
+                    let result = null;
+                    const storedValue = sessionStorage.getItem(this.#timeLeftKey);
+                    if (storedValue) {
+                        result = parseInt(storedValue, 10);
+                    }
+                    return result;
+                }
+
+                static set value(value) {
+                    sessionStorage.setItem(this.#timeLeftKey, value);
+                }
+
+                static get isInitialized() {
+                    return this.defaultValue !== null && this.value !== null;
+                }
+
+                static init(defaultValue) {
+                    this.value = defaultValue;
+                    this.defaultValue = defaultValue;
+                }
+
+                static reset() {
+                    this.value = this.defaultValue;
+                }
+
+                static remove() {
+                    sessionStorage.removeItem(this.#timeLeftKey);
+                    sessionStorage.removeItem(this.#defaultValueKey);
+                }
+            };
+        }
+
+        class GdcFileMng {
+            static prefixFileName = "data_";
+            static fileExtension = ".gdc";
+
+            static init(prefix = "data_", extension = ".gdc") {
+                this.prefixFileName = prefix;
+                this.fileExtension = extension;
+            }
+
+            static async load() {
+                const fileInput = GdcPageMng.mainContainer.mainMenu.loadFileInput.get();
+                const file = fileInput.files[0];
+                if (!file) return null; // Devolvemos null si no hay archivo
+
+                // 1. Retornamos una nueva Promesa para controlar el flujo asíncrono
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+
+                    reader.onload = async function (e) {
+                        const encryptedData = e.target.result;
+                        try {
+                            // Desencriptar los datos
+                            console.log("GdcFileMng.load: GdcCryptoMng.decrypt.");
+                            const decryptedData = await GdcCryptoMng.decrypt(encryptedData);
+                            const data = JSON.parse(decryptedData);
+
+                            // 2. ¡Éxito! Resolvemos la promesa devolviendo la data
+                            resolve(data);
+                        } catch (error) {
+                            reject(new Error("GdcFileMng.load: Error decrypting or importing data: " + error.message));
+                        }
+                    };
+
+                    // Manejar errores de lectura del archivo físico (ej. archivo dañado)
+                    reader.onerror = function (error) {
+                        reject(new Error("GdcFileMng.load: Error reading physical file: " + error));
+                    };
+
+                    reader.readAsText(file);
+                });
+            }
+
+            static async save(text) {
+                if (!text) {
+                    throw new Error("GdcFileMng.save: No text provided to save.");
+                }
+                try {
+                    const fileName = this.prefixFileName + DateManager.getFormattedCurrentDateString() + this.fileExtension;
+                    text = await GdcCryptoMng.encrypt(text);
+                    const blob = new Blob([text], { type: "application/plain" }); // Crear un blob con el texto a guardar
+
+                    // Crear un enlace para descargar el archivo
+                    const a = document.createElement("a");
+                    a.href = URL.createObjectURL(blob);
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    //Hace click en el enlace creado
+                    a.click();
+                    //Elimina el enlace creado
+                    document.body.removeChild(a);
+
+                    ConsoleManager.addLog("GdcFileMng.save: Account file saved successfully: " + fileName);
+                    return fileName;
+                }
+                catch (error) {
+                    throw new Error("GdcFileMng.save: Error to save text to file: " + error.message);
+                }
+            }
+        }
+
+        class GdcCountDownCtrlMng {
+
+            static #timeLeft = -1;
+            static #running = false;
+            static #countdownInterval = null;
+
+            static get defaultTimeLeft() {
+                return GdcSessionStorageMng.sessionTimeLeft.defaultValue ?? 0;
+            }
+
+            static set defaultTimeLeft(newTimeInSeconds) {
+                GdcSessionStorageMng.sessionTimeLeft.defaultValue = newTimeInSeconds ?? 0;
+            }
+
+            static get timeLeft() {
+                return this.#timeLeft;
+            }
+
+            static set timeLeft(newTimeInSeconds) {
+                GdcPageMng.menuBar.countDownField.input.value = newTimeInSeconds;
+                this.#timeLeft = newTimeInSeconds;
+            }
+
+            static get isRunning() {
+                return this.#running;
+            }
+
+            static async init() {
+                this.#timeLeft = this.defaultTimeLeft;
+                if (this.#countdownInterval) {
+                    clearInterval(this.#countdownInterval);
+                    this.#countdownInterval = null;
+                }
+                this.#running = false;
+            }
+
+            static update() {
+                const newTime = GdcPageMng.menuBar.countDownField.input.value;
+                if (newTime !== null && newTime >= 0) {
+                    this.defaultTimeLeft = newTime;
+                    this.#timeLeft = newTime;
+                } else {
+                    AlertManager.showWarning("Formato inválido. Por favor, usa hh:mm:ss");
+                    //GdcCountDownCtrlMng.setTimeFieldLeft(timeLeft);
+                }
+            }
+
+            static async start() {
+                clearInterval(this.#countdownInterval);
+                this.#countdownInterval = setInterval(handleCountDownUpdate, 1000);
+                this.#running = true;
+                GdcPageMng.menuBar.countDownField.setInStart();
+            }
+
+            static pause() {
+                clearInterval(this.#countdownInterval);
+                this.#countdownInterval = null;
+                this.#running = false;
+                GdcPageMng.menuBar.countDownField.setInPause();
+            }
+
+            static reset(start = false) {
+                const wasRunning = this.isRunning;
+                this.init();
+                if (start || wasRunning) {
+                    this.start();
+                }
+            }
+
+            static end() {
+                this.pause();
+                this.#timeLeft = -1;
+            }
+        }
+
+        class GdcSessionMng {
+
+            static get isInitialized() {
+                return GdcCryptoMng.key === null;
+            }
+
+            static get isLogged() {
+                return GdcCryptoMng.key !== null;
+            }
+
+            static init() {
+                GdcCryptoMng.key = null;
+            }
+
+            static async login(password) {
+                GdcCryptoMng.encryptionKey = password;
+                if (GdcLocalStorageMng.accountData.exists()) {
+                    let numAccountsLoaded = await GdcAccountsMng.load();
+                    if (numAccountsLoaded != null) {
+                        ConsoleManager.addLog("GdcSessionMng.login: Fichero cargado correctamente de memoria. Se han leido " + numAccountsLoaded + " cuentas.")
+                        return true;
+                    }
+                    else {
+                        GdcPageMng.mainContainer.mainMenu.newPasswordButton.show();
+
+                        const attempt = await GdcLocalStorageMng.validatePasswordAttempt.decrease();
+                        if (attempt < maxAttempts) {
+                            if (attempt > 0)
+                                AlertManager.showWarning("La contraseña ingresada no es correcta. Intentos restantes: " + attempt);
+                            else {
+                                GdcPageMng.mainContainer.mainMenu.newPasswordButton.hide();
+                                AlertManager.showError("Se ha agotado los intentos para abrir el fichero. Por favor, carga o crea un nuevo fichero.")
+                            }
+                        }
+
+                        ConsoleManager.addLog("GdcSessionMng.login: La contraseña es incorrecta. Intentos restantes: " + attempt);
+                        return false;
+                    }
+                }
+                else {
+                    ConsoleManager.addLog("GdcSessionMng.login: No hay cuentas almacenadas en local storage")
+                    return true;
+                }
+            }
+
+            static logout() {
+                GdcCryptoMng.key = null;
+            }
+        }
+
+        class GdcAccountsMng {
+
+            static #idCounter = -1;
+            static #edited = false;
+            static #pendingToSaveFile = false;
+
+            static get edited() {
+                return this.#edited;
+            }
+
+            static get pendingToSaveFile() {
+                return this.#pendingToSaveFile;
+            }
+
+            static getNewIndex() {
+                return ++this.#idCounter;
+            }
+
+            static setEdited() {
+                this.#edited = true;
+                this.#pendingToSaveFile = true;
+            }
+
+            static get isInitialized() {
+                return this.#idCounter !== -1;
+            }
+
+            static async init() {
+                this.#idCounter = 1;
+                this.#edited = false;
+                this.#pendingToSaveFile = false;
+            }
+
+            static loadJson(dataJson) {
+                let idMax = GdcPageMng.mainContainer.mainTable.load(dataJson);
+                this.#idCounter = (idMax ?? 0) + 1;
+                this.#edited = false;
+                this.#pendingToSaveFile = false;
+                return dataJson.length;
+            }
+
+            static async saveJson(dataJson) {
+                await GdcLocalStorageMng.accountData.set(dataJson);
+                this.#edited = false;
+                return dataJson.length;
+            }
+
+            static async load() {
+                let numloaded = 0;
+                const dataJson = await GdcLocalStorageMng.accountData.get();
+                if (dataJson) {
+                    numloaded = this.loadJson(dataJson);
+                }
+                ConsoleManager.addLog("GdcAccountsMng.load: Accounts loaded from local storage successfully: " + numloaded);
+                return numloaded;
+            }
+
+            static async save() {
+                let numSaved = 0;
+                const dataJson = GdcPageMng.mainContainer.mainTable.dataRows.getJsonData();
+                if (dataJson) {
+                    numSaved = await this.saveJson(dataJson);
+                }
+                ConsoleManager.addLog("GdcAccountsMng.save: Accounts saved into local storage successfully: " + numSaved);
+                return numSaved;
+            }
+
+            static async loadFromFile() {
+                try {
+                    const numloaded = 0;
+                    const dataJson = await GdcFileMng.load();
+                    if (this.#pendingToSaveFile && ConfirmManager.confirm("Hay cambios pendientes de guardar. ¿Desea guardarlos ahora?")) {
+                        const numSaved = await this.saveJson(dataJson);
+                        ConsoleManager.addLog("GdcAccountsMng.load: Saved pending changes to local storage: " + numSaved);
+                    }
+
+                    if (dataJson) {
+                        await GdcLocalStorageMng.accountData.set(dataJson);
+                        numloaded = this.loadJson(dataJson);
+                        ConsoleManager.addLog("GdcAccountsMng.loadFromFile: Accounts loaded from file successfully: " + numloaded);
+                    }
+                    return numloaded;
+                } catch (error) {
+                    throw new Error("GdcAccountsMng.loadFromFile: Error loading accounts from file: " + error.message);
+                }
+            }
+
+            static async saveToFile() {
+                try {
+                    const dataJson = GdcPageMng.mainContainer.mainTable.dataRows.getJsonData();
+                    const fileName = GdcFileMng.save(dataJson);
+                    if (fileName) {
+                        ConsoleManager.addLog("GdcAccountsMng.save: Accounts saved to file successfully: " + fileName);
+                        this.#pendingToSaveFile = false;
+                    }
+                    return fileName;
+                } catch (error) {
+                    throw new Error("GdcAccountsMng.saveToFile: Error saving accounts to file: " + error.message);
+                }
+            }
+
+            static async reset() {
+                if (!this.isInitialized) {
+                    throw new Error("GdcAccountsMng.reset: The manager is not initialized.");
+                }
+
+                if (ConfirmManager.confirm("Los datos actuales se van a borrar ¿Desea guardar una copia en fichero encriptado con la contraseña antigua?")) {
+                    const fileName = await this.saveToFile();
+                    ConsoleManager.addLog("GdcAccountsMng.reset: Saved old table data to file with old password: " + fileName);
+                    AlertManager.showSuccess("Se ha guardado una copia con la antigua contraseña en: " + fileName);
+                };
+
+                GdcLocalStorageMng.reset();
+                this.#idCounter = 1;
+                this.#edited = false;
+                this.#pendingToSaveFile = false;
+                //this.#selectedRow = null;
+            }
+
+            static async close() {
+                if (this.#edited || this.#pendingToSaveFile) {
+                    const dataJson = GdcPageMng.mainContainer.mainTable.dataRows.getJsonData();
+
+                    if (this.#edited) {
+                        await GdcLocalStorageMng.accountData.set(dataJson);
+                        this.#edited = false;
+                        ConsoleManager.addLog("GdcAccountsMng.close: Accounts saved into local storage successfully!");
+                    }
+
+                    if (this.#pendingToSaveFile &&
+                        (GdcPageMng.mainContainer.mainMenu.autosaveField.checkbox.isChecked ||
+                            ConfirmManager.confirm("Se han modificado los datos de las cuentas. ¿Desea guardarlos en un archivo?")
+                        )) {
+
+                        const dataJson = GdcPageMng.mainContainer.mainTable.dataRows.getJsonData();
+                        const fileName = GdcFileMng.save(dataJson);
+                        if (fileName) {
+                            ConsoleManager.addLog("GdcAccountsMng.close: Accounts saved to file successfully: " + fileName);
+                            this.#pendingToSaveFile = false;
+                        }
+                    }
+                }
+
+                GdcPageMng.mainContainer.mainTable.close();
+
+                this.#idCounter = 1;
+                this.#edited = false;
+            }
+        }
+
+        class GdcAppMng {
+
+            static #status = "";
+
+            static get status() {
+                return this.#status;
+            }
+
+            static setStatus(status) {
+                switch (status) {
+                    case "opened":
+                        GdcPageMng.mainContainer.mainMenu.setStatus("opened");
+                        GdcCountDownCtrlMng.reset(true);
+                        break;
+                    case "importingFile":
+                        GdcCountDownCtrlMng.end(true);
+                        GdcPageMng.mainContainer.mainMenu.setStatus("importingFile");
+                        break;
+                    case "loadingFile":
+                        GdcCountDownCtrlMng.end(true);
+                        GdcPageMng.mainContainer.mainMenu.setStatus("loadingFile");
+                        break;
+                    case "addingAccount":
+                        GdcCountDownCtrlMng.reset(true);
+                        GdcPageMng.mainContainer.mainMenu.setStatus("addingAccount");
+                        break;
+                    case "editingAccount":
+                        GdcCountDownCtrlMng.reset(true);
+                        break;
+                    case "closed":
+                        GdcCountDownCtrlMng.end(true);
+                        GdcPageMng.close();
+                        break;
+                    default:
+                        ConsoleManager.addError("GdcAppMng.setStatus: Unsupported status: " + status);
+                }
+                this.#status = status;
+            }
+
+            static init(appVersion, defaultSessionTimeLeft, maxAttempts, sessionKey, encryptionMethod) {
+                GdcCryptoMng.init(sessionKey, encryptionMethod);
+                GdcSessionStorageMng.init(appVersion, defaultSessionTimeLeft, sessionKey);
+                GdcLocalStorageMng.init(appVersion, maxAttempts);
+                GdcPageMng.init();
+                GdcFileMng.init();
+                GdcSessionMng.init();
+                GdcAccountsMng.init();
+                GdcCountDownCtrlMng.init();
+
+                if (GdcLocalStorageMng.accountData.exists()) {
+                    const attempt = await GdcLocalStorageMng.validatePasswordAttempt.value;
+                    if (attempt < maxAttempts) {
+                        if (attempt > 0)
+                            AlertManager.showMessage("Solo quedan " + attempt + " intentos para desencriptar el fichero");
+                        else {
+                            GdcPageMng.mainContainer.mainMenu.passwordField.hide();
+                            AlertManager.showMessage("Se ha agotado los intentos para abrir el fichero. Por favor, carga o crea un nuevo fichero.")
+                        }
+                    }
+                }
+                else {
+                    document.getElementById("btnNewDecryptPassword").classList.add("hidden");
+                }
+
+                this.setStatus("closed");
+            }
+        }
+
+        async function handleCloseForm() {
+            try {
+                if (GdcAccountsMng.edited) {
+                    await GdcAccountsMng.save();
+                    if (ConfirmManager.confirm("Se han modificado los datos de las cuentas. ¿Desea guardarlos en un archivo?")) {
+                        await GdcAccountsMng.saveToFile();
+                    }
+                }
+                await GdcAccountsMng.close();
+                GdcSessionMng.logout();
+                GdcLocalStorageMng.close();
+                GdcAppMng.setStatus("closed");
+            }
+            catch (error) {
+                ConsoleManager.addError("handleCloseForm: Error closing session: " + error.message);
+                AlertManager.showException("Error al cerrar la sesión: " + error.message);
+            }
+        }
+
+        function handleTogglePasswordFieldClick() {
+            GdcPageMng.mainContainer.mainMenu.passwordField.togglePassword();
+            GdcCountDownCtrlMng.reset();
+        }
+
+        async function handleNextClick(event) {
+
+            const elementoClikeado = event.target;
+            console.log("handleNextClick: Se hizo clic exactamente en:", elementoClikeado);
+            console.log("handleNextClick: ID del elemento:", elementoClikeado.id);
+            console.log("handleNextClick: Clases del elemento:", elementoClikeado.className);
+
+            if (GdcAppMng.status == "importingFile") {
+                GdcAppMng.setStatus("loadingFile");
+            }
+            else {
+                try {
+                    const result = await GdcSessionMng.login(GdcPageMng.mainContainer.mainMenu.passwordField.input.value);
+                    if (result) {
+                        GdcAppMng.setStatus("opened");
+                    }
+                    else {
+                        await handleCloseForm();
+                    }
+                } catch (error) {
+                    ConsoleManager.addError("handleNextClick: Error during login: " + error.message);
+                    AlertManager.showException("Error durante el inicio de sesión: " + error.message);
+                }
+            }
+        }
+
+        async function handleDecryptPasswordInputKeypress(event) {
+            if (event.key === "Enter") {
+                await handleNextClick(event);
+            }
+        }
+
+        async function handleNewButtonClick() {
+            if (ConfirmManager.confirm("Se van a borrar todas las contraseñas ¿Estás seguro de continuar?")) {
+                try {
+                    await GdcAccountsMng.reset();
+                    GdcSessionMng.logout();
+                    GdcLocalStorageMng.reset();
+                    GdcAppMng.setStatus("closed");
+
+                    AlertManager.showException("Creado un nuevo fichero de gestión de cuentas! Por favor, introduzca la contraseña de desencriptación.");
+                }
+                catch (error) {
+                    ConsoleManager.addError("handleNewButtonClick: Error creating new accounts file: " + error.message);
+                    AlertManager.showException("Error al crear un nuevo fichero de cuentas: " + error.message);
+                }
+            };
+        }
+
+        async function handleChangeDecryptPasswordClick() {
+            if (ConfirmManager.confirm("¿Estás seguro de cambiar la contraseña?")) {
+
+                const newPass = GdcPageMng.mainContainer.mainMenu.passwordField.input.value;
+                if (newPass == GdcCryptoMng.encryptionKey) {
+                    AlertManager.showError("La nueva contraseña no es valida");
+                } else {
+                    try {
+                        //const fileName = await GdcAccountsMng.saveToFile();
+                        //ConsoleManager.addLog("handleChangeDecryptPasswordClick: Saved old table data to file: " + fileName);
+                        //AlertManager.showSuccess("Se ha guardado una copia con la antigua contraseña en: " + fileName);
+
+                        GdcCryptoMng.encryptionKey = newPass;
+
+                        await GdcAccountsMng.save();
+                        ConsoleManager.addLog("handleChangeDecryptPasswordClick: New table saved into local storage successfully!");
+
+                        const fileName = await GdcAccountsMng.saveToFile();
+                        ConsoleManager.addLog("handleChangeDecryptPasswordClick: Accounts saved to file successfully: " + fileName);
+
+                        await handleCloseForm();
+
+                        AlertManager.showSuccess("Contraseña cambiada correctamente! Por favor, introduzca la nueva contraseña de desencriptación.");
+                    }
+                    catch (error) {
+                        ConsoleManager.addError("handleChangeDecryptPasswordClick: Error changing password: " + error.message);
+                        AlertManager.showException("Error al cambiar la contraseña: " + error.message);
+                    }
+                }
+            }
+        }
+
+        // Load File Handlers
+        function handleLoadButtonClick() {
+            if (ConfirmManager.confirm("Se va ha importar un fichero de contraseñas nuevo ¿Estás seguro de continuar?")) {
+                GdcAppMng.setStatus("importingFile");
+                AlertManager.showSuccess("Fichero cargado correctamente. Por favor, introduzca la contraseña de desencriptación del nuevo fichero.");
+            }
+        }
+
+        async function handleLoadFileInput() {
+            if (GdcAppMng.status == "loadingFile") {
+                if (ConfirmManager.confirm("Se va a cargar un fichero nuevo ¿Está seguro que quiere continuar?")) {
+                    try {
+                        const numLoaded = await GdcAccountsMng.loadFromFile();
+                        if (numLoaded != null) {
+                            GdcAppMng.setStatus("opened");
+                            ConsoleManager.addLog("handleLoadFileInput: File loaded successfully with " + numLoaded + " accounts.");
+                            AlertManager.showSuccess(`Se han cargado correctamente ${numLoaded} cuentas.`);
+                        }
+                        else {
+                            GdcAppMng.setStatus("closed");
+                            ConsoleManager.addLog("handleLoadFileInput: No accounts loaded from file.");
+                            AlertManager.showWarning("No se ha encontrado ninguna cuenta en el fichero.");
+                        }
+                    }
+                    catch (error) {
+                        ConsoleManager.addError("handleLoadFileInput: Error loading file: " + error.message);
+                        AlertManager.showException("Error al cargar el fichero: " + error.message);
+                    }
+                }
+            }
+            else {
+                ConsoleManager.addError("handleLoadFileInput: Invalid status: " + GdcAppMng.status);
+                AlertManager.showError("Error al cargar el fichero: Estado incorrecto: " + GdcAppMng.status);
+            }
+        }
+
+        async function handleSaveAccountsToFileButtonClick() {
+            try {
+                const fileName = await GdcAccountsMng.saveToFile();
+                if (fileName) {
+                    ConsoleManager.addLog("handleSaveAccountsToFileButtonClick: Accounts saved to file successfully: " + fileName);
+                    AlertManager.showSuccess("Se han guardado las cuentas en el fichero: " + fileName);
+                }
+            }
+            catch (error) {
+                ConsoleManager.addError("handleSaveAccountsToFileButtonClick: Error saving accounts to file: " + error.message);
+                AlertManager.showException("Error al guardar las cuentas en el fichero: " + error.message);
+            }
+        }
+
+        // Countdown Manager Handlers
+        function handleStartButtonClick() {
+            GdcCountDownCtrlMng.start(); // Reanudar el temporizador
+        }
+
+        function handlePauseButtonClick() {
+            GdcCountDownCtrlMng.pause(); // Llamar a la nueva función para pausar el temporizador
+        }
+
+        function handleResetButtonClick() {
+            GdcCountDownCtrlMng.reset(); // Reiniciar el temporizador solo si estaba corriendo
+        }
+
+        function handleCountdownInputFocus() {
+            GdcCountDownCtrlMng.pause(); // Llamar a la nueva función para pausar el temporizador
+        }
+
+        function handleCountdownInputChange() {
+            GdcCountDownCtrlMng.update();
+        }
+
+        function handleCountdownInputKeypress(event) {
+            if (event.key === "Enter") {
+                GdcPageMng.menuBar.countDownField.input.blur(); // Pierde el foco
+                GdcCountDownCtrlMng.start();
+            }
+        }
+
+        async function handleCountDownUpdate() {
+            let timeLeft = GdcCountDownCtrlMng.timeLeft;
+            if (timeLeft > 0) {
+                GdcCountDownCtrlMng.timeLeft = --timeLeft;
+            } else {
+                //AlertManager.showMessage('El tiempo ha terminado');
+                await handleCloseForm();
+            }
+        }
+
+        // Table Handlers
+        function handleAddAcountButtonClick() {
+            GdcPageMng.mainContainer.mainTable.newDataRow();
+            GdcAppMng.setStatus("addingAccount");
+        }
+
+        async function handleMoveRowUpButtonClick() {
+            if (GdcPageMng.mainContainer.mainTable.dataRows.selectedRow.moveUp()) {
+                await GdcAccountsMng.save();
+            }
+            GdcCountDownCtrlMng.reset();
+        }
+
+        async function handleMoveRowDownButtonClick() {
+            if (GdcPageMng.mainContainer.mainTable.dataRows.selectedRow.moveDown()) {
+                await GdcAccountsMng.save();
+            }
+            GdcCountDownCtrlMng.reset();
+        }
+
+        async function handleTableClick(event) {
+            GdcCountDownCtrlMng.reset();
+
+            let control = event.target;
+            let editingRow = control.closest("tr");
+
+            //Remove row
+            if (HtmlManager.containsClass(control, "delete")) {
+
+                const userConfirmed = ConfirmManager.confirm("¿Estás seguro de que deseas borrar el registro?");
+                if (userConfirmed) {
+                    editingRow.remove();
+                    try {
+                        await GdcAccountsMng.save();
+                    }
+                    catch (error) {
+                        ConsoleManager.addError("handleTableClick: Error removing accounts: " + error.message);
+                        AlertManager.showException("Error al guardar las cuentas: " + error.message);
+                    }
+                }
+
+            } //Edit row
+            else if (HtmlManager.containsClass(control, "edit")) {
+                const data = GdcPageMng.mainContainer.mainTable.dataRows.dataRow.getData(editingRow);
+                GdcPageMng.mainContainer.mainTable.editRow.fill(data);
+                HtmlManager.hide(editingRow); // Hide editing row;
+                GdcPageMng.mainContainer.mainTable.insertDataRow(editingRow);
+                GdcPageMng.setStatus("editingAccount");
+            } //Toggle password
+            else if (HtmlManager.containsClass(control, "btnTogglePassword")) {
+                const passwordField = control.previousElementSibling;
+                if (passwordField.type === "password") {
+                    passwordField.type = "text";
+                    if (passwordField.dataset.encrypted) {
+                        console.log("handleTableClick: GdcCryptoMng.decrypt.");
+                        passwordField.value = await GdcCryptoMng.decrypt(
+                            passwordField.dataset.encrypted
+                        );
+                    }
+                    control.textContent = "🙈"; // Cambia el icono
+
+                    // Iniciar contador de 15 segundos para ocultar la contraseña
+                    setTimeout(() => {
+                        if (passwordField.type === "text") {
+                            passwordField.type = "password";
+                            if (passwordField.dataset.encrypted)
+                                passwordField.value = StringManager.maskText(passwordField.value);
+                            control.textContent = "👁️"; // Vuelve al icono original
+                        }
+                    }, 15000); // 15000 milisegundos = 15 segundos
+                } else {
+                    passwordField.type = "password";
+                    if (passwordField.dataset.encrypted)
+                        passwordField.value = StringManager.maskText(passwordField.value);
+                    control.textContent = "👁️"; // Vuelve al icono original
+                }
+            }
+
+            GdcPageMng.mainContainer.mainTable.dataRows.selectedRow.set(editingRow);
+        }
+
+        async function handleSaveAccountButtonClick() {
+            GdcCountDownCtrlMng.reset();
+            const rowData = GdcPageMng.mainContainer.mainTable.editRow.getData();
+            const originalRow = GdcPageMng.mainContainer.mainTable.dataRows.dataRow.getById(rowData.id);
+            if (originalRow) {
+                const editedRow = GdcPageMng.mainContainer.mainTable.dataRows.dataRow.create(rowData);
+                GdcPageMng.mainContainer.mainTable.replaceDataRow(editedRow, originalRow);
+            } else {
+                rowData.id = GdcAccountsMng.getNewIndex();
+                GdcPageMng.mainContainer.mainTable.addAccount(rowData);
+            }
+
+            try {
+                await GdcAccountsMng.save();
+            }
+            catch (error) {
+                ConsoleManager.addError("handleSaveAccountButtonClick: Error saving accounts: " + error.message);
+                AlertManager.showException("Error al guardar las cuentas: " + error.message);
+            }
+
+            GdcPageMng.mainContainer.mainTable.recreateEditRow();
+            GdcPageMng.setStatus("opened");
+        }
+
+        function handleCancelEditAcoountButtonClick() {
+            GdcCountDownCtrlMng.reset();
+            GdcPageMng.mainContainer.mainTable.editRow.showOriginal();
+            GdcPageMng.mainContainer.mainTable.recreateEditRow();
+            GdcPageMng.setStatus("opened");
+        }
+
+        // App Initialization
+        const APP_VERSION = "1.0.0";
+        const DEFAULT_SESSION_TIME_LEFT = 300; // 5 minutes in seconds
+        const MAX_ATTEMPTS = 5;
+        const ENCRYPTION_METHOD = "PBKDF2";
+
+        async function init() {
+
+            GdcAppMng.init(
+                APP_VERSION,
+                DEFAULT_SESSION_TIME_LEFT,
+                MAX_ATTEMPTS,
+                StringManager.generatePassword(8),
+                ENCRYPTION_METHOD
+            );
+
+            if (GdcLocalStorageMng.accountData.exists()) {
+                const attempt = await GdcLocalStorageMng.validatePasswordAttempt.value;
+                if (attempt < maxAttempts) {
+                    if (attempt > 0)
+                        AlertManager.showMessage("Solo quedan " + attempt + " intentos para desencriptar el fichero");
+                    else {
+                        GdcPageMng.mainContainer.mainMenu.passwordField.hide();
+                        AlertManager.showMessage("Se ha agotado los intentos para abrir el fichero. Por favor, carga o crea un nuevo fichero.")
+                    }
+                }
+            }
+            else {
+                document.getElementById("btnNewDecryptPassword").classList.add("hidden");
+            }
+        }
+
+        function checkLegalAcceptance() {
+            //const hasAccepted = localStorage.getItem("gdc_legal_accepted");
+            const modal = document.getElementById("legalModal");
+
+            //if (!hasAccepted) {
+            modal.style.display = "block";
+            //}
+
+            document.getElementById("btnAcceptLegal").onclick = function () {
+                //localStorage.setItem("gdc_legal_accepted", "true");
+                modal.style.display = "none";
+                init();
+                // Opcional: podrías llamar a init() aquí si quieres que la app no haga nada hasta aceptar
+            };
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const startButton = document.getElementById("btnStartCountdown");
+            startButton.addEventListener("click", handleStartButtonClick);
+
+            const pauseButton = document.getElementById("btnPauseCountdown");
+            pauseButton.addEventListener("click", handlePauseButtonClick);
+
+            const resetButton = document.getElementById("btnResetCountdown");
+            resetButton.addEventListener("click", handleResetButtonClick);
+
+            const countdownInput = document.getElementById("txtCountdown");
+            countdownInput.addEventListener("focus", handleCountdownInputFocus);
+            countdownInput.addEventListener("input", handleCountdownInputChange);
+            countdownInput.addEventListener("keypress", handleCountdownInputKeypress);
+
+            const passwordInput = GdcPageMng.mainContainer.mainMenu.passwordField.input.get();
+            passwordInput.addEventListener("keypress", handleDecryptPasswordInputKeypress);
+
+            const saveDecryptPasswordButton = document.getElementById("btnNext");
+            saveDecryptPasswordButton.addEventListener("click", handleNextClick);
+
+            const changeDecryptPasswordButton = document.getElementById("btnChangeDecryptPassword");
+            changeDecryptPasswordButton.addEventListener("click", handleChangeDecryptPasswordClick);
+
+            const togglePassword = document.getElementById("btnToggleDecryptPassword");
+            togglePassword.addEventListener("click", handleTogglePasswordFieldClick);
+
+            const newButton = document.getElementById("btnNewDecryptPassword");
+            newButton.addEventListener("click", handleNewButtonClick);
+
+            const addButton = document.getElementById("btnAddAccount");
+            addButton.addEventListener("click", handleAddAcountButtonClick);
+
+            const addButtonTop = document.getElementById("btnAddAccountTop");
+            addButtonTop.addEventListener("click", handleAddAcountButtonClick);
+
+            const importButton = document.getElementById("btnLoad");
+            importButton.addEventListener("click", handleLoadButtonClick);
+
+            const exportButton = document.getElementById("btnSave");
+            exportButton.addEventListener("click", handleSaveAccountsToFileButtonClick);
+
+            const importFileInput = document.getElementById("inputLoadFile");
+            importFileInput.addEventListener("change", handleLoadFileInput);
+
+            const moveUpButton = document.getElementById("btnMoveAccountUp");
+            moveUpButton.addEventListener("click", handleMoveRowUpButtonClick);
+
+            const moveDownButton = document.getElementById("btnMoveAccountDown");
+            moveDownButton.addEventListener("click", handleMoveRowDownButtonClick);
+
+            const tableBody = document.querySelector("#tblMain tbody");
+            tableBody.addEventListener("click", handleTableClick);
+
+            const saveButton = document.getElementById("save-button");
+            saveButton.addEventListener("click", handleSaveAccountButtonClick);
+
+            const cancelButton = document.getElementById("cancel-button");
+            cancelButton.addEventListener("click", handleCancelEditAcoountButtonClick);
+
+            checkLegalAcceptance();
+        });
+    </script>
+</body>
+
+</html>
