@@ -437,6 +437,7 @@
             #containerTableMain,
             #containerMenuBarBottom,
             #containerBottom,
+            #btnChangeDecryptPassword,
             #btnMoveAccountUp,
             #btnMoveAccountDown {
                 display: none;
@@ -482,8 +483,13 @@
                     display: block;
                 }
 
+                #btnChangeDecryptPassword {
+                    display: inline-block;
+                }
+
                 #inputLoadFile,
                 #btnNewDecryptPassword,
+                #btnNext,
                 #btnLoad {
                     display: none;
                 }
@@ -818,7 +824,7 @@
                 <div id="containerDecryptPassword">
                     <input id="txtDecryptPassword" type="password" placeholder="Contraseña" aria-label="Contraseña de Desencriptación" />
                     <span id="btnToggleDecryptPassword" title="Mostrar/Ocultar Contraseña" class="btn emoji" aria-label="Mostrar/Ocultar Contraseña">👁️</span>
-                    <span id="btnChangeDecryptPassword" title="Cambiar contraseña encriptación" class="btn emoji hidden" aria-label="Cambiar contraseña encriptación">💾</span>
+                    <span id="btnChangeDecryptPassword" title="Cambiar contraseña encriptación" class="btn emoji" aria-label="Cambiar contraseña encriptación">💾</span>
                     <button id="btnNext" type="button" title="Siguiente">></button>
                 </div>
                 <input id="inputLoadFile" type="file" accept=".gdc" />
@@ -1037,27 +1043,27 @@
             }
 
             static showMessage(message) {
-                alert("GDC:\n" + message);
+                alert("GDC: " + message);
             }
 
             static showSuccess(message) {
-                alert("¡ÉXITO! GDC:\n" + message);
+                alert("¡ÉXITO!\nGDC: " + message);
             }
 
             static showWarning(message) {
-                alert("¡ATENCIÓN! GDC:\n" + message);
+                alert("¡ATENCIÓN!\nGDC: " + message);
             }
 
             static showError(message) {
-                alert("¡ERROR! GDC:\n" + message);
+                alert("¡ERROR!\nGDC: " + message);
             }
 
             static showException(exception) {
                 if (typeof exception === "string") {
-                    alert("¡EXCEPCIÓN! GDC: \n" + exception);
+                    alert("¡EXCEPCIÓN!\nGDC: " + exception);
                 }
                 else if (exception instanceof Error) {
-                    alert("¡EXCEPCIÓN! GDC:\n" + exception.message);
+                    alert("¡EXCEPCIÓN!\nGDC: " + exception.message);
                 }
                 else {
                     throw new Error("AlertManager.showException: Unsupported exception type");
@@ -2270,8 +2276,29 @@
             static prefixFileName = "data_";
             static fileExtension = ".gdc";
 
-            static init(prefix = "data_", extension = ".gdc") {
-                this.prefixFileName = prefix;
+            static #generarPrefix() {
+                const letras = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+                let nombre = "";
+
+                for (let i = 0; i < 8; i++) {
+                    const indiceAleatorio = Math.floor(Math.random() * letras.length);
+                    nombre += letras[indiceAleatorio];
+                }
+
+                return nombre + "_";
+            }
+
+            static #extractPrefix(fileName) {
+                const parts = fileName.split('_');
+                // Si tiene un prefijo válido y no es el antiguo "data", lo usamos
+                if (parts.length > 1 && parts[0] !== "data") {
+                    return parts[0] + "_";
+                }                
+                return this.#generarPrefix();
+            }
+
+            static init(extension = ".gdc") {
+                this.prefixFileName = this.#generarPrefix();
                 this.fileExtension = extension;
             }
 
@@ -2282,7 +2309,10 @@
 
                 return new Promise((resolve, reject) => {
                     const reader = new FileReader();
-                    reader.onload = (e) => resolve(e.target.result);
+                    reader.onload = (e) => {
+                        this.prefixFileName = this.#extractPrefix(file.name);
+                        resolve(e.target.result);
+                    };
                     reader.onerror = function (error) {
                         reject(new Error("GdcFileMng.load: Error reading physical file: " + error));
                     };
@@ -2315,6 +2345,10 @@
                 catch (error) {
                     throw new Error("GdcFileMng.save: Error to save text to file: " + error.message);
                 }
+            }
+
+            static reset() {
+                this.prefixFileName = this.#generarPrefix();
             }
         }
 
@@ -2401,6 +2435,7 @@
             }
 
             static remove() {
+                this.pendingToSaveFile.remove();
                 this.validatePasswordAttempt.remove();
                 this.accountData.remove();
                 this.appVersion.remove()
@@ -2431,6 +2466,27 @@
                     const value = localStorage.getItem(this.#valueKey);
                     if (value) {
                         return parseInt(value, 10);
+                    }
+                    return null;
+                }
+
+                static set value(value) {
+                    localStorage.setItem(this.#valueKey, value);
+                }
+
+                static remove() {
+                    localStorage.removeItem(this.#valueKey);
+                }
+            };
+
+            static pendingToSaveFile = class {
+
+                static #valueKey = "gdcPendingSave";
+
+                static get value() {
+                    const value = localStorage.getItem(this.#valueKey);
+                    if (value !== null) {
+                        return value === "true";
                     }
                     return null;
                 }
@@ -2610,10 +2666,13 @@
                 // =========================================================================
                 static mainMenu = class {
                     static newPasswordButton = new HtmlControls.Button("btnNewDecryptPassword");
-                    static inputLoadFile = new HtmlControls.Input("inputLoadFile");
+                    static inputLoadFile = new HtmlControls.FileInput("inputLoadFile");
                     static loadFileButton = new HtmlControls.Button("btnLoad");
 
                     static setStatus(status) {
+                        if (status == "loadingFile") {
+                            this.inputLoadFile.clear();
+                        }
                         this.passwordField.setStatus(status);
                     }
 
@@ -2647,7 +2706,7 @@
                         }
 
                         static setStatus(status) {
-                            switch (status) {                                
+                            switch (status) {
                                 case "closed":
                                     this.input.setEnabled();
                                     this.toggleViewButton.setEnabled();
@@ -2658,6 +2717,12 @@
                                     this.input.setDisabled();
                                     this.toggleViewButton.setDisabled();
                                     this.nextButton.setDisabled();
+                                    this.clear();
+                                    break;
+                                case "importingFile":
+                                    this.input.setEnabled();
+                                    this.toggleViewButton.setEnabled();
+                                    this.nextButton.setEnabled();
                                     this.clear();
                                     break;
                                 default:
@@ -3068,7 +3133,6 @@
 
             static #idCounter = -1;
             static #edited = false;
-            static #pendingToSaveFile = false;
 
             static get exixts() {
                 return GdcLocalStorageMng.accountData.exists;
@@ -3079,21 +3143,22 @@
             }
 
             static get pendingToSaveFile() {
-                return this.#pendingToSaveFile;
+                return GdcLocalStorageMng.pendingToSaveFile.value;
+            }
+            static set pendingToSaveFile(value) {
+                GdcLocalStorageMng.pendingToSaveFile.value = value;
             }
 
-            static _loadHtmlTable(dataJson) {
+            static #loadHtmlTable(dataJson) {
                 let result = GdcPageMng.mainContainer.mainTable.load(dataJson);
                 if (result) {
                     this.#idCounter = (result.maxId ?? 0) + 1;
-                    this.#edited = false;
-                    this.#pendingToSaveFile = false;
                     return result.count;
                 }
                 return 0;
             }
 
-            static _clearHtmlTable() {
+            static #clearHtmlTable() {
                 this.#idCounter = 1;
                 return GdcPageMng.mainContainer.mainTable.clear();
             }
@@ -3102,15 +3167,14 @@
                 return ++this.#idCounter;
             }
 
-            static setEdited() {
-                this.#edited = true;
-                this.#pendingToSaveFile = true;
-            }
-
             static async init() {
-                this.#idCounter = 1;
+                this.#idCounter = -1;
                 this.#edited = false;
-                this.#pendingToSaveFile = false;
+
+                const pendingSaveFile = this.pendingToSaveFile;
+                if (pendingSaveFile == null) {
+                    this.pendingToSaveFile = false;
+                }
             }
 
             static async load() {
@@ -3121,23 +3185,23 @@
                     if (decryptedText) {
                         const dataJson = JSON.parse(decryptedText);
                         if (dataJson) {
-                            numloaded = this._loadHtmlTable(dataJson);
+                            numloaded = this.#loadHtmlTable(dataJson);
                         }
 
                         this.#edited = false;
-                        this.#pendingToSaveFile = false;
                     }
                     ConsoleManager.addLog("GdcAccountsMng.load: Accounts loaded from local storage successfully: " + numloaded);
                 }
                 else {
-                    ConsoleManager.addLog("GdcAccountsMng.load: No found accounts to loaded into local storage");
+                    numloaded = 0;
+                    ConsoleManager.addWarn("GdcAccountsMng.load: No found accounts to loaded into local storage");
                 }
                 return numloaded;
             }
 
             static async loadFromFile() {
                 try {
-                    if (this.#pendingToSaveFile && ConfirmManager.confirm("Hay cambios pendientes de guardar en fichero. ¿Desea guardarlos ahora?")) {
+                    if (this.pendingToSaveFile && ConfirmManager.confirm("Hay cambios pendientes de guardar en fichero. ¿Desea guardarlos ahora?")) {
                         const numSaved = await this.saveToFile();
                         ConsoleManager.addLog("GdcAccountsMng.loadFromFile: Saved pending changes to local storage: " + numSaved);
                     }
@@ -3149,7 +3213,7 @@
 
                     const dataJson = JSON.parse(decryptedText);
                     if (dataJson) {
-                        let numloaded = this._loadHtmlTable(dataJson);
+                        let numloaded = this.#loadHtmlTable(dataJson);
                         ConsoleManager.addLog("GdcAccountsMng.loadFromFile: Accounts loaded from file successfully: " + numloaded);
 
                         const numSavedInMemory = await this.save();
@@ -3157,7 +3221,8 @@
                         if (numloaded !== numSavedInMemory) {
                             throw new Error(`Data mismatch: Loaded ${numloaded} elements, but saved ${numSavedInMemory} in memory.`);
                         }
-                        this.#pendingToSaveFile = false;
+
+                        this.pendingToSaveFile = false;
                         return numloaded;
                     }
                 }
@@ -3165,7 +3230,7 @@
                     ConsoleManager.addError("GdcAccountsMng.loadFromFile: Exception: " + ex.message);
                     GdcUserSessionMng.password = null;
                     return null;
-                }                
+                }
             }
 
             static async save() {
@@ -3176,7 +3241,7 @@
                     GdcLocalStorageMng.accountData.value = await GdcCryptoMng.encrypt(dataJson);
                     numSaved = dataArray.length;
                     this.#edited = false;
-                    this.#pendingToSaveFile = true;
+                    this.pendingToSaveFile = true;
                 }
                 ConsoleManager.addLog("GdcAccountsMng.save: Accounts saved into local storage successfully: " + numSaved);
                 return numSaved;
@@ -3196,7 +3261,7 @@
                     const fileName = GdcFileMng.save(encryptedText);
                     if (fileName) {
                         ConsoleManager.addLog("GdcAccountsMng.save: Accounts saved to file successfully: " + fileName);
-                        this.#pendingToSaveFile = false;
+                        this.pendingToSaveFile = false;
                     }
                     return fileName;
                 }
@@ -3207,22 +3272,22 @@
             }
 
             static async reset() {
-                if (this.#pendingToSaveFile) {
+                if (this.pendingToSaveFile) {
                     if (ConfirmManager.confirm("Los datos actuales se van a borrar ¿Desea guardar una copia en fichero encriptado con la contraseña antigua?")) {
                         await this.saveToFile();
                     }
                 }
-                this.#pendingToSaveFile = false;
+                this.pendingToSaveFile = false;
                 this.#edited = false;
-                this._clearHtmlTable();
+                this.#clearHtmlTable();
                 GdcLocalStorageMng.accountData.remove();
             }
 
             static async close(autosave) {
-                if (this.#pendingToSaveFile) {
+                if (this.pendingToSaveFile) {
                     if (autosave || ConfirmManager.confirm("Se han modificado los datos de las cuentas. ¿Desea guardarlos en un archivo?")) {
                         await this.saveToFile();
-                        this.#pendingToSaveFile = false;
+                        this.pendingToSaveFile = false;
                     }
                 }
                 if (this.#edited) {
@@ -3230,7 +3295,7 @@
                     this.#edited = false;
                 }
 
-                this._clearHtmlTable();
+                this.#clearHtmlTable();
             }
         }
 
@@ -3285,7 +3350,7 @@
                 return result;
             }
 
-            static _resetAttempts() {
+            static #resetAttempts() {
                 this.attempt = this.#maxAttempts;
             }
 
@@ -3314,7 +3379,7 @@
                 let numAccountsLoaded = await GdcAccountsMng.load();
                 if (numAccountsLoaded >= 0) {
                     ConsoleManager.addLog("GdcUserSessionMng.login: Fichero cargado correctamente de memoria. Se han leido " + numAccountsLoaded + " cuentas.");
-                    this._resetAttempts();
+                    this.#resetAttempts();
                     return "opened";
                 }
                 else {
@@ -3335,13 +3400,13 @@
             static async logout(autosave) {
                 await GdcAccountsMng.close(autosave);
                 GdcCryptoMng.clear();
-                this._resetAttempts();
+                this.#resetAttempts();
             }
 
             static async reset() {
                 await GdcAccountsMng.reset();
                 GdcCryptoMng.reset();
-                this._resetAttempts();
+                this.#resetAttempts();
             }
         }
 
@@ -3434,17 +3499,17 @@
 
             static get status() { return GdcPageMng.status; }
 
-            static _validatePassword(password) {
+            static #validatePassword(password) {
                 if (!password) {
                     AlertManager.showError("La contraseña es requerida.");
                     return false;
                 }
                 else if (this.status == "new") {
-                    // const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{7,}$/;
-                    // if (!regex.test(password)) {
-                    //     AlertManager.showError("La contraseña debe tener al menos 7 caracteres, incluyendo una mayúscula, una minúscula y un número.");
-                    //     return false;
-                    // }
+                    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{7,}$/;
+                    if (!regex.test(password)) {
+                        AlertManager.showError("La contraseña debe tener al menos 7 caracteres, incluyendo una mayúscula, una minúscula y un número.");
+                        return false;
+                    }
                 }
                 return true;
             }
@@ -3453,10 +3518,11 @@
                 if (appVersion === undefined || appVersion === null) {
                     throw new Error("GdcDataMng.init: appVersion is required");
                 }
-                GdcFileMng.init("data_", ".gdc");
+                GdcFileMng.init(".gdc");
                 GdcCryptoMng.init(encryptionMethod);
                 GdcSessionStorageMng.init(appVersion)
                 GdcLocalStorageMng.init(appVersion);
+                GdcAccountsMng.init();
                 GdcUserSessionMng.init(defaultSessionTimeLeft, maxAttempts);
                 GdcAccountsMng.init();
                 GdcPageMng.init();
@@ -3495,18 +3561,39 @@
                 this.setStatus(await GdcUserSessionMng.checkStatus());
             }
 
+            static async next() {
+                switch (GdcAppMng.status) {
+                    case "new":
+                    case "loadingFile":
+                    case "closed":
+                        await GdcAppMng.open();
+                        break;
+                    // case "opened":
+                    //     await GdcAppMng.changePassword();
+                    //     break;
+                    case "importingFile":
+                        GdcAppMng.setStatus("loadingFile");
+                        break;
+                    default:
+                        ConsoleManager.addError("handleNextClick: Unsupported status: " + GdcAppMng.status);
+                }
+            }
+
             static async open() {
                 try {
                     const pass = GdcPageMng.mainContainer.mainMenu.passwordField.input.value;
-                    if (this._validatePassword(pass)) {
+                    if (this.#validatePassword(pass)) {
                         const result = await GdcUserSessionMng.login(pass);
 
                         GdcAppMng.setStatus(result);
 
-                        if (result == "opened")
+                        if (result == "opened") {
+                            GdcCountDownCtrlMng.reset();
                             GdcCountDownCtrlMng.start();
-                        else
+                        }
+                        else {
                             GdcCountDownCtrlMng.end();
+                        }
                         return result;
                     }
                     else {
@@ -3522,42 +3609,99 @@
             static async changePassword() {
                 if (ConfirmManager.confirm("Se van a cambiar la contraseña ¿Estás seguro de continuar?")) {
                     try {
-                        const pass = GdcPageMng.mainContainer.mainMenu.passwordField.input.value;
-                        if (this._validatePassword(pass)) {
-                            GdcUserSessionMng.password = pass;
-                            await GdcAccountsMng.save();
+                        const newPass = GdcPageMng.mainContainer.mainMenu.passwordField.input.value;
+                        if (newPass == GdcCryptoMng.encryptionKey) {
+                            AlertManager.showError("La nueva contraseña no es valida");
+                        } else {
+                            if (this.#validatePassword(newPass)) {
+                                GdcUserSessionMng.password = newPass;
+                                await GdcAccountsMng.save();
+                                await GdcAppMng.close();
+                                AlertManager.showSuccess("Contraseña cambiada correctamente!");
+                            }
                         }
                     }
                     catch (error) {
-                        ConsoleManager.addError("GdcAppMng: Error changing password: " + error.message);
+                        ConsoleManager.addError("GdcAppMng.changePassword: Error changing password: " + error.message);
                         AlertManager.showException("Error al cambiar la contraseña: " + error.message);
                     }
                 }
             }
 
+            static async loadFromFile() {
+                if (GdcAppMng.status == "loadingFile") {
+                    if (ConfirmManager.confirm("Se va a cargar un fichero nuevo ¿Está seguro que quiere continuar?")) {
+                        try {
+                            const numLoaded = await GdcAccountsMng.loadFromFile();
+                            if (numLoaded != null) {
+                                GdcAppMng.setStatus("opened");
+                                GdcCountDownCtrlMng.reset();
+                                GdcCountDownCtrlMng.start();
+                                ConsoleManager.addLog("GdcAppMng.loadFromFile: File loaded successfully with " + numLoaded + " accounts.");
+                                AlertManager.showSuccess(`Se han cargado correctamente ${numLoaded} cuentas.`);
+                            }
+                            else {
+                                GdcAppMng.setStatus("closed");
+                                ConsoleManager.addLog("GdcAppMng.loadFromFile: Incorrect file or password.");
+                                AlertManager.showWarning("No se ha podido cargar el fichero, por favor verifique si el fichero y la contraseña son correctos.");
+                            }
+                        }
+                        catch (error) {
+                            ConsoleManager.addError("GdcAppMng.loadFromFile: Error loading file: " + error.message);
+                            AlertManager.showException("Error al cargar el fichero: " + error.message);
+                        }
+                    }
+                }
+                else {
+                    ConsoleManager.addError("GdcAppMng.loadFromFile: Invalid status: " + GdcAppMng.status);
+                    AlertManager.showError("Error al cargar el fichero: Estado incorrecto: " + GdcAppMng.status);
+                }
+            }
+
+            static async saveToFile() {
+                try {
+                    const fileName = await GdcAccountsMng.saveToFile();
+                    if (fileName) {
+                        ConsoleManager.addLog("GdcAppMng.saveToFile: Accounts saved to file successfully: " + fileName);
+                        AlertManager.showSuccess("Se han guardado las cuentas en el fichero: " + fileName);
+                    }
+                }
+                catch (error) {
+                    ConsoleManager.addError("GdcAppMng.saveToFile: Error saving accounts to file: " + error.message);
+                    AlertManager.showException("Error al guardar las cuentas en el fichero: " + error.message);
+                }
+            }
+
             static async reset() {
                 if (ConfirmManager.confirm("Se van a borrar todas las contraseñas ¿Estás seguro de continuar?")) {
-                    GdcUserSessionMng.reset();
-                    GdcCountDownCtrlMng.end();
-                    this.setStatus("new");
+                    try {
+                        GdcFileMng.reset();
+                        await GdcUserSessionMng.reset();
+                        GdcCountDownCtrlMng.end();
+                        this.setStatus("new");
+                    }
+                    catch (error) {
+                        ConsoleManager.addError("GdcAppMng.reset: Error : " + error.message);
+                        AlertManager.showException("Error al crear nueva sesión: " + error.message);
+                    }
                 }
             }
 
             static async close() {
-                GdcUserSessionMng.logout(GdcPageMng.mainContainer.mainMenu.autosaveField.checkbox.isChecked);
-                GdcCountDownCtrlMng.end();
-                this.setStatus(await GdcUserSessionMng.checkStatus());
+                try {
+                    GdcUserSessionMng.logout(GdcPageMng.mainContainer.mainMenu.autosaveField.checkbox.isChecked);
+                    GdcCountDownCtrlMng.end();
+                    this.setStatus(await GdcUserSessionMng.checkStatus());
+                }
+                catch (error) {
+                    ConsoleManager.addError("handleCloseForm: Error closing session: " + error.message);
+                    AlertManager.showException("Error al cerrar la sesión: " + error.message);
+                }
             }
         }
 
         async function handleCloseForm() {
-            try {
-                await GdcAppMng.close();
-            }
-            catch (error) {
-                ConsoleManager.addError("handleCloseForm: Error closing session: " + error.message);
-                AlertManager.showException("Error al cerrar la sesión: " + error.message);
-            }
+            await GdcAppMng.close();
         }
 
         function handleTogglePasswordFieldClick() {
@@ -3566,119 +3710,37 @@
         }
 
         async function handleNextClick(event) {
-            switch (GdcAppMng.status) {
-                case "new":
-                case "loadingFile":
-                case "closed":
-                    await GdcAppMng.open();
-                    break;
-                case "opened":
-                    await GdcAppMng.changePassword();
-                    break;
-                case "importingFile":
-                    GdcAppMng.setStatus("loadingFile");
-                    break;
-                default:
-                    ConsoleManager.addError("handleNextClick: Unsupported status: " + GdcAppMng.status);
-            }
+            await GdcAppMng.next();
         }
 
         async function handleDecryptPasswordInputKeypress(event) {
             if (event.key === "Enter") {
-                await handleNextClick(event);
+                await GdcAppMng.next();
             }
         }
 
         async function handleNewButtonClick() {
-            try {
-                await GdcAppMng.reset();
-            }
-            catch (error) {
-                ConsoleManager.addError("handleNewButtonClick: Error : " + error.message);
-                AlertManager.showException("Error al crear nueva sesión: " + error.message);
-            }
+            await GdcAppMng.reset();
         }
 
         async function handleChangeDecryptPasswordClick() {
-            if (ConfirmManager.confirm("¿Estás seguro de cambiar la contraseña?")) {
-
-                const newPass = GdcPageMng.mainContainer.mainMenu.passwordField.input.value;
-                if (newPass == GdcCryptoMng.encryptionKey) {
-                    AlertManager.showError("La nueva contraseña no es valida");
-                } else {
-                    try {
-                        //const fileName = await GdcAccountsMng.saveToFile();
-                        //ConsoleManager.addLog("handleChangeDecryptPasswordClick: Saved old table data to file: " + fileName);
-                        //AlertManager.showSuccess("Se ha guardado una copia con la antigua contraseña en: " + fileName);
-
-                        GdcCryptoMng.encryptionKey = newPass;
-
-                        await GdcAccountsMng.save();
-                        ConsoleManager.addLog("handleChangeDecryptPasswordClick: New table saved into local storage successfully!");
-
-                        const fileName = await GdcAccountsMng.saveToFile();
-                        ConsoleManager.addLog("handleChangeDecryptPasswordClick: Accounts saved to file successfully: " + fileName);
-
-                        await handleCloseForm();
-
-                        AlertManager.showSuccess("Contraseña cambiada correctamente! Por favor, introduzca la nueva contraseña de desencriptación.");
-                    }
-                    catch (error) {
-                        ConsoleManager.addError("handleChangeDecryptPasswordClick: Error changing password: " + error.message);
-                        AlertManager.showException("Error al cambiar la contraseña: " + error.message);
-                    }
-                }
-            }
+            await GdcAppMng.changePassword()
         }
 
         // Load File Handlers
         function handleLoadButtonClick() {
             if (ConfirmManager.confirm("Se va ha importar un fichero de contraseñas nuevo ¿Estás seguro de continuar?")) {
                 GdcAppMng.setStatus("importingFile");
-                AlertManager.showSuccess("Por favor, introduzca la contraseña de desencriptación del nuevo fichero.");
+                AlertManager.showSuccess("Por favor, introduzca la contraseña de desencriptación del fichero.");
             }
         }
 
         async function handleLoadFileInput() {
-            if (GdcAppMng.status == "loadingFile") {
-                if (ConfirmManager.confirm("Se va a cargar un fichero nuevo ¿Está seguro que quiere continuar?")) {
-                    try {
-                        const numLoaded = await GdcAccountsMng.loadFromFile();
-                        if (numLoaded != null) {
-                            GdcAppMng.setStatus("opened");
-                            ConsoleManager.addLog("handleLoadFileInput: File loaded successfully with " + numLoaded + " accounts.");
-                            AlertManager.showSuccess(`Se han cargado correctamente ${numLoaded} cuentas.`);
-                        }
-                        else {
-                            GdcAppMng.setStatus("closed");
-                            ConsoleManager.addLog("handleLoadFileInput: No accounts loaded from file.");
-                            AlertManager.showWarning("No se ha encontrado ninguna cuenta en el fichero.");
-                        }
-                    }
-                    catch (error) {
-                        ConsoleManager.addError("handleLoadFileInput: Error loading file: " + error.message);
-                        AlertManager.showException("Error al cargar el fichero: " + error.message);
-                    }
-                }
-            }
-            else {
-                ConsoleManager.addError("handleLoadFileInput: Invalid status: " + GdcAppMng.status);
-                AlertManager.showError("Error al cargar el fichero: Estado incorrecto: " + GdcAppMng.status);
-            }
+            GdcAppMng.loadFromFile();
         }
 
         async function handleSaveAccountsToFileButtonClick() {
-            try {
-                const fileName = await GdcAccountsMng.saveToFile();
-                if (fileName) {
-                    ConsoleManager.addLog("handleSaveAccountsToFileButtonClick: Accounts saved to file successfully: " + fileName);
-                    AlertManager.showSuccess("Se han guardado las cuentas en el fichero: " + fileName);
-                }
-            }
-            catch (error) {
-                ConsoleManager.addError("handleSaveAccountsToFileButtonClick: Error saving accounts to file: " + error.message);
-                AlertManager.showException("Error al guardar las cuentas en el fichero: " + error.message);
-            }
+            GdcAppMng.saveToFile();
         }
 
         // Countdown Manager Handlers
@@ -3831,7 +3893,7 @@
         }
 
         // App Initialization
-        const APP_VERSION = "0.0.0";
+        const APP_VERSION = "0.2.0";
         const DEFAULT_SESSION_TIME_LEFT = 300; // 5 minutes in seconds
         const MAX_ATTEMPTS = 5;
         const ENCRYPTION_METHOD = "PBKDF2";
