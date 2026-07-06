@@ -93,10 +93,11 @@
 
         /* Agrupación de Botones y Variantes -------------------------------------------------------------------- */
         button, .btn, .btn-primary {
+            display: inline-block;
             margin: 3px;
             height: 26px;
             min-width: 26px;
-            padding: 2px 5px;
+            padding: 5px 5px;
             font-size: var(--font-size);
             border: none;
             border-radius: 3px;
@@ -116,7 +117,11 @@
                 pointer-events: none;
             }
 
-            &.secondary, &.btn-secondary {
+            &.btn-emoji {
+                font-size: 12px;
+            }
+
+            &.btn-secondary {
                 background-color: var(--secondary-color);
 
                 &:not(:disabled):hover {
@@ -124,7 +129,7 @@
                 }
             }
 
-            &.red, &.btn-red {
+            &.btn-red {
                 background-color: var(--red-color);
 
                 &:not(:disabled):hover {
@@ -132,7 +137,7 @@
                 }
             }
 
-            &.dark, &.btn-dark {
+            &.btn-dark {
                 background-color: var(--dark-color);
 
                 &:not(:disabled):hover {
@@ -140,19 +145,16 @@
                 }
             }
 
-            &.emoji {
+            &.btn-transparent {
                 background-color: initial;
-                cursor: pointer;
 
-                &:not(:disabled):hover {
+                &:not(:disabled):hover {                    
                     background-color: initial;
+                    filter: invert(20%)
                 }
 
                 &.disabled {
-                    opacity: 0.45;
                     filter: none;
-                    cursor: not-allowed;
-                    pointer-events: none;
                 }
             }
         }
@@ -374,7 +376,7 @@
                 align-items: center;
             }
 
-            .btnTogglePassword {
+            .btn-togglePassword {
                 margin-left: 5px;
             }
         }
@@ -506,6 +508,10 @@
                     display: block;
                 }
 
+                #btnChangeDecryptPassword {
+                    display: inline-block;
+                }
+
                 #tblMain tr.form-row {
                     display: table-row;
                 }
@@ -515,6 +521,7 @@
                 #btnSave,
                 #inputLoadFile,
                 #btnNewDecryptPassword,
+                #btnNext,
                 #btnLoad {
                     display: none !important;
                 }
@@ -526,14 +533,19 @@
                 #containerActions,
                 #containerAutosave,
                 #containerTableMain,
-                #containerMenuBarBottom,
-                #btnMoveAccountUp,
-                #btnMoveAccountDown {
+                #containerMenuBarBottom {
                     display: block;
+                }
+
+                #btnMoveAccountUp,
+                #btnMoveAccountDown,
+                #btnChangeDecryptPassword {
+                    display: inline-block;
                 }
 
                 #inputLoadFile,
                 #btnNewDecryptPassword,
+                #btnNext,
                 #btnLoad {
                     display: none;
                 }
@@ -588,22 +600,67 @@
             }
 
             #tblMain {
-                thead.header-large {
-                    display: none;
+
+                thead {
+                    &.header-large {
+                        display: none;
+                    }
+
+                    &.header-small {
+                        display: table-header-group;
+                    }
+
+                    th {
+                        display: block;
+                        text-align: left;
+                        position: relative;
+                        /* width: 100% ya se asume al ser block, eliminamos !important */
+                    }
                 }
 
-                thead.header-small {
-                    display: table-header-group;
-                }
+                tr {
+                    td {
+                        display: block;
+                        width: 100% !important;
+                        position: relative;
 
-                th, td {
-                    display: block;
-                    width: 100% !important;
-                    position: relative;
-                }
+                        & > div {
+                            justify-content: center;
 
-                th {
-                    text-align: left;
+                            & > span.field-label {
+                                display: inline;
+                                overflow: initial;
+                            }
+                        }
+
+                        &.only-laptop {
+                            display: none;
+                        }
+                    }
+
+                    &.data-row {
+                        td {
+                            &.site-name {
+                                background-color: var(--background-color-table-head);
+                            }
+                        }
+                    }
+
+                    &.form-row {
+                        display: none;
+                        position: fixed;
+                        top: 0;
+                        right: 0;
+                        z-index: 50;
+                        background-color: white;
+                        padding-top: 40px;
+
+                        &.new {
+                            #updateDateCell {
+                                display: none;
+                            }
+                        }
+                    }
                 }
 
                 tr.form-row {
@@ -635,11 +692,11 @@
 
                 #form-row.new #updateDateCell {
                     display: none;
-                }
+                }                
+            }
 
-                #btnAddAccount {
-                    display: none;
-                }
+            #btnAddAccount {
+                display: none;
             }
 
             #containerMenuBarBottom {
@@ -800,7 +857,7 @@
     <div id="containerMenuBar">
         <div>
             <div id="buttonPanelMenuLeft">
-                <button id="btnClose" type="button" title="Cerrar" class="btn-red">X</button>
+                <button id="btnClose" type="button" class="btn-red" title="Salir">X</button>
                 <div id="fieldCountdown">
                     <input id="txtCountdown" type="text" value="00:05:00" />
                     <button id="btnStartCountdown">▶️</button>
@@ -810,10 +867,10 @@
 
             </div>
             <div id="buttonPanelMenuRight">
-                <button id="btnSave" type="button" title="Guardar" class="btn-secondary right" aria-label="Guardar en fichero">Guardar</button>
-                <button id="btnMoveAccountDown" type="button" class="right" style="padding-top: 0px;" title="Bajar fila">↓</button>
-                <button id="btnMoveAccountUp" type="button" class="right" style="padding-top: 0px;" title="Subir fila">↑</button>
-                <button id="btnAddAccountTop" type="button" class="right" title="Nuevo">+</button>
+                <button id="btnSave" type="button" title="Guardar" class="btn-emoji btn-secondary right" aria-label="Guardar en fichero">Guardar</button>
+                <button id="btnMoveAccountDown" type="button" class="btn-emoji right" style="padding-top: 0px;" title="Bajar fila">↓</button>
+                <button id="btnMoveAccountUp" type="button" class="btn-emoji right" style="padding-top: 0px;" title="Subir fila">↑</button>
+                <button id="btnAddAccountTop" type="button" class="right" title="Añadir cuenta">+</button>
             </div>
         </div>
     </div>
@@ -823,8 +880,8 @@
             <div class="containerMainMenuLine">
                 <div id="containerDecryptPassword">
                     <input id="txtDecryptPassword" type="password" placeholder="Contraseña" aria-label="Contraseña de Desencriptación" />
-                    <span id="btnToggleDecryptPassword" title="Mostrar/Ocultar Contraseña" class="btn emoji" aria-label="Mostrar/Ocultar Contraseña">👁️</span>
-                    <span id="btnChangeDecryptPassword" title="Cambiar contraseña encriptación" class="btn emoji" aria-label="Cambiar contraseña encriptación">💾</span>
+                    <span id="btnToggleDecryptPassword" title="Mostrar/Ocultar Contraseña" class="btn btn-emoji btn-transparent" aria-label="Mostrar/Ocultar Contraseña">👁️</span>
+                    <span id="btnChangeDecryptPassword" title="Cambiar contraseña encriptación" class="btn btn-emoji btn-transparent" aria-label="Cambiar contraseña encriptación">💾</span>
                     <button id="btnNext" type="button" title="Siguiente">></button>
                 </div>
                 <input id="inputLoadFile" type="file" accept=".gdc" />
@@ -884,7 +941,7 @@
                             <div>
                                 <input type="password" id="f-password" class="encrypted-password" placeholder="Password"
                                        aria-label="Contraseña" />
-                                <span class="btnTogglePassword btn emoji">👁️</span>
+                                <span class="btn btn-emoji btn-transparent btn-togglePassword" style="margin-left: 5px;">👁️</span>
                             </div>
                         </td>
                         <td>
@@ -906,10 +963,10 @@
                         </td>
                         <td>
                             <div class="buttonPanel">
-                                <button type="button" id="save-button" title="Guardar" class="btn btn-primary">
+                                <button type="button" id="save-button" title="Guardar" class="btn-emoji">
                                     💾
                                 </button>
-                                <button type="button" id="cancel-button" title="Cancelar" class="btn btn-dark">
+                                <button type="button" id="cancel-button" title="Cancelar" class="btn-emoji btn-dark">
                                     ❌
                                 </button>
                             </div>
@@ -920,11 +977,11 @@
                             <td class="hidden"><div><span class="field-label">Id:</span><span class="data-row-id"></span></div></td>
                             <td class="site-name"><div><span class="field-label">Sitio:</span><span class="data-row-site"></span></div></td>
                             <td><div><span class="field-label">Usuario:</span><input type="text" class="data-row-user" readonly></div></td>
-                            <td><div><span class="field-label">Password:</span><input type="password" class="encrypted-password data-row-password" readonly><span class="btn emoji btnTogglePassword">👁️</span></div></td>
+                            <td><div><span class="field-label">Password:</span><input type="password" class="encrypted-password data-row-password" readonly><span class="btn btn-emoji btn-transparent btn-togglePassword">👁️</span></div></td>
                             <td><div><span class="field-label">Notas:</span><span class="data-row-notes"></span></div></td>
                             <td class="only-laptop"><div><span class="field-label">Creación:</span><span class="date data-row-create"></span></div></td>
                             <td><div><span class="field-label">Actualización:</span><span class="date data-row-update"></span></div></td>
-                            <td><div class="buttonPanel"><button title="Editar" class="edit">✏️</button><button title="Eliminar" class="delete red">X</button></div></td>
+                            <td><div class="buttonPanel"><button title="Editar" class="btn-emoji btn-transparent btn-edit" style="border: 1px solid var(--border-color-table); padding: 4px;">✏️</button><button title="Eliminar" class="btn-red btn-delete">X</button></div></td>
                         </tr>
                     </template>
                 </tbody>
@@ -2588,7 +2645,6 @@
                 // Formulario de edición
                 this.mainContainer.mainTable.body.editRow.btnSave.onClick(handleSaveAccountButtonClick);
                 this.mainContainer.mainTable.body.editRow.btnCancel.onClick(handleCancelEditAcoountButtonClick);
-                //this.mainContainer.mainTable.body.editRow.btnTogglePassword.onClick(handleToggleEditPasswordFieldClick); // O tu handler para el ojo del formulario
 
                 // === BARRA INFERIOR (menuBarBottom) ===
                 this.menuBarBottom.addAccountButton.onClick(handleAddAcountButtonClick);
@@ -3033,7 +3089,7 @@
 
                             static btnSave = new HtmlControls.Button("save-button");
                             static btnCancel = new HtmlControls.Button("cancel-button");
-                            static btnTogglePassword = new HtmlControls.Button("form-row .btnTogglePassword");
+                            static btnTogglePassword = new HtmlControls.Button("form-row .btn-togglePassword");
 
                             static get htmlElement() { return this.row.htmlElement; }
 
@@ -3826,11 +3882,11 @@
                     }
 
                 } //Edit row
-                else if (HtmlManager.containsClass(clickedControl, "edit")) {
+                else if (HtmlManager.containsClass(clickedControl, "btnedit")) {
                     GdcPageMng.mainContainer.mainTable.editAccount(clickedRow);
                     GdcPageMng.setStatus("editingAccount");
                 } //Toggle password
-                else if (HtmlManager.containsClass(clickedControl, "btnTogglePassword")) {
+                else if (HtmlManager.containsClass(clickedControl, "btn-togglePassword")) {
                     const passwordField = clickedControl.previousElementSibling;
                     if (passwordField.type === "password") {
                         passwordField.type = "text";
