@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Gestor de Cuentas</title>
-    <meta name="version" content="0.2.2">
+    <meta name="version" content="0.2.2.2">
     <meta name="author" content="Respada">
     <meta name="reply-to" content="respada.pgr@gmail.com">
     <meta name="description" content="Lightweight web application for account management. Organize your credentials directly in your browser using local PBKDF2 encryption. Without external data transfer.">
@@ -3584,8 +3584,9 @@
                 this.password = password;
                 let numAccountsLoaded = await GdcAccountsMng.load();
                 if (numAccountsLoaded >= 0) {
-                    ConsoleManager.addLog("GdcUserSessionMng.login: Fichero cargado correctamente de memoria. Se han leido " + numAccountsLoaded + " cuentas.");
+                    GdcPageMng.mainPage.mainContainer.mainMenu.passwordField.input.value = "";
                     this.#resetAttempts();
+                    ConsoleManager.addLog("GdcUserSessionMng.login: Fichero cargado correctamente de memoria. Se han leido " + numAccountsLoaded + " cuentas.");
                     return "opened";
                 }
                 else {
@@ -4123,7 +4124,7 @@
         }
 
         // App Initialization
-        const APP_VERSION = "0.2.2";
+        const APP_VERSION = "0.2.2.2";
         const DEFAULT_SESSION_TIME_LEFT = 300; // 5 minutes in seconds
         const MAX_ATTEMPTS = 5;
         const ENCRYPTION_METHOD = "PBKDF2";
